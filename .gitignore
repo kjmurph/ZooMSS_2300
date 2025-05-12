@@ -2,5 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-Inputs/
+Input/
+Output/
 *.DS_Store
