@@ -1,169 +1,15 @@
----
-  title: "R Notebook"
-output: html_notebook
----
 
+df_existing_matrix <- readRDS("Enviro_Matrix/ClimateChange_Compiled_Distinct.rds")
 
-  ```{r}
 library(ncdf4)
 library(raster)
 library(tidyverse)
 library(lubridate)
 
-```
-
-```{r}
-df_existing_matrix <- readRDS("enviro_CMIP_Matrix.RDS")
-```
-
-
-
-```{r}
-library(ncdf4)
-library(raster)
-library(tidyverse)
-library(lubridate)
 
 # Base directory
-base_dir <- "~/R Projects/ZooMSS_2300/ZooMSS_2300_forcings/merged"
-out_dir <- "~/R Projects/ZooMSS_2300/ZooMSS_2300_forcings/output"
-
-# Test with just one model and one experiment
-ModelArray <- c("cesm2-waccm")
-ExpArray <- c("historical")
-
-# Create empty data frame to store results
-df <- NULL
-
-cat("=== TESTING SUBSET PROCESSING ===\n")
-cat("Processing only", ModelArray[1], "with experiment", ExpArray[1], "\n\n")
-
-for (m in 1:length(ModelArray)){
-  cat("\nProcessing model:", ModelArray[m], "\n")
-
-  # For the test, use consistent realization
-  realization <- "r1i1p1f1"
-
-  for (e in 1:length(ExpArray)){
-    exp <- ExpArray[e]
-    cat("  Processing experiment:", exp, "\n")
-
-    # Search patterns with correct realizations
-    tos_pattern <- paste0(ModelArray[m], "_", realization, "_", exp, ".*tos")
-    chla_pattern <- paste0(ModelArray[m], "_", realization, "_", exp, ".*chla-top")
-
-    cat("  Looking for tos files with pattern:", tos_pattern, "\n")
-    cat("  Looking for chla files with pattern:", chla_pattern, "\n")
-
-    # Search in the base directory for files matching the patterns
-    ftos <- list.files(base_dir, pattern = tos_pattern, full.names = TRUE)
-    fchl <- list.files(base_dir, pattern = chla_pattern, full.names = TRUE)
-
-    cat("  tos files found:", length(ftos), "\n")
-    if(length(ftos) > 0) {
-      cat("    tos files:\n")
-      print(basename(ftos))
-    } else {
-      cat("    No tos files found for this model/experiment combination.\n")
-    }
-
-    cat("  chla files found:", length(fchl), "\n")
-    if(length(fchl) > 0) {
-      cat("    chla files:\n")
-      print(basename(fchl))
-    } else {
-      cat("    No chla files found for this model/experiment combination.\n")
-    }
-
-    # Skip this iteration if no files found
-    if(length(ftos) == 0 || length(fchl) == 0) {
-      cat("  Skipping this combination due to missing files.\n")
-      next
-    }
-
-    # Process the files as before
-    tryCatch({
-      cat("\nReading tos raster stack...\n")
-      tos_stack <- stack(ftos)
-      cat("  tos stack info:", nlayers(tos_stack), "layers\n")
-
-      cat("Converting tos stack to dataframe...\n")
-      ttos <- as.data.frame(tos_stack, xy = TRUE, na.rm = FALSE)
-      cat("  tos dataframe dimensions:", dim(ttos)[1], "rows,", dim(ttos)[2], "columns\n")
-
-      cat("Pivoting tos dataframe...\n")
-      ttos <- ttos %>%
-        pivot_longer(cols = contains("X", ignore.case = FALSE), names_to = "Date", values_to = "SST")
-      cat("  pivoted tos dataframe dimensions:", dim(ttos)[1], "rows,", dim(ttos)[2], "columns\n")
-
-      cat("\nReading chla raster stack...\n")
-      chl_stack <- stack(fchl)
-      cat("  chla stack info:", nlayers(chl_stack), "layers\n")
-
-      cat("Converting chla stack to dataframe...\n")
-      tchl <- as.data.frame(chl_stack, xy = TRUE, na.rm = FALSE)
-      cat("  chla dataframe dimensions:", dim(tchl)[1], "rows,", dim(tchl)[2], "columns\n")
-
-      cat("Pivoting chla dataframe...\n")
-      tchl <- tchl %>%
-        pivot_longer(cols = contains("X", ignore.case = FALSE), names_to = "Date", values_to = "Chl") %>%
-        dplyr::select(Chl)
-      cat("  pivoted chla dataframe dimensions:", dim(tchl)[1], "rows,", dim(tchl)[2], "columns\n")
-
-      cat("Combining dataframes...\n")
-      temp <- bind_cols(ttos, tchl) %>%
-        add_column(Model = ModelArray[m],
-                   Experiment = exp)
-      cat("  combined dataframe dimensions:", dim(temp)[1], "rows,", dim(temp)[2], "columns\n")
-
-      if (is.null(df)){
-        df <- temp
-      } else {
-        df <- bind_rows(df, temp)
-      }
-      cat("  Successfully processed data for", ModelArray[m], exp, "\n")
-
-      # Sample the data to show a small preview
-      cat("\nPreview of the processed data (first 10 rows):\n")
-      print(head(temp, 10))
-
-    }, error = function(e) {
-      cat("  ERROR processing", ModelArray[m], exp, ":", conditionMessage(e), "\n")
-    })
-
-    rm(temp, ttos, tchl, ftos, fchl)
-  }
-}
-
-if (!is.null(df)) {
-  cat("\nTransforming final dataset...\n")
-  df <- df %>%
-    mutate(Date = str_replace(Date, "X", ""),
-           Date = ymd(Date),
-           Year = year(Date)) %>%
-    rename(Lon = x, Lat = y) %>%
-    mutate(SST = round(SST, digits = 1),
-           Chl_log10 = log10(Chl),
-           Chl_log10 = round(Chl_log10, digits = 2))
-
-  cat("Final dataframe has", nrow(df), "rows and", ncol(df), "columns\n")
-  cat("First few rows of the final dataframe:\n")
-  print(head(df))
-
-  # For testing, let's not save the file yet
-  cat("\nTest completed successfully!\n")
-  cat("To save the data, uncomment the write_rds line in the code.\n")
-  # write_rds(df, paste0(out_dir,.Platform$file.sep,"ClimateChange_Compiled.rds"))
-} else {
-  cat("No data was processed. Please check file patterns and directory structure.\n")
-}
-```
-
-
-```{r}
-# Base directory
-base_dir <- "~/R Projects/ZooMSS_2300/ZooMSS_2300_forcings/merged"
-out_dir <- "~/R Projects/ZooMSS_2300/ZooMSS_2300_forcings/output"
+base_dir <- "~/R Projects/ZooMSS_2300/Input/"
+out_dir <- "~/R Projects/ZooMSS_2300/Input/2300_processed/"
 
 # Updated model names to match actual file patterns
 ModelArray <- c("cesm2-waccm", "ipsl-cm6a-lr", "ukesm1-0-ll")
@@ -171,8 +17,8 @@ ModelArray <- c("cesm2-waccm", "ipsl-cm6a-lr", "ukesm1-0-ll")
 ExpArray <- c("historical", "picontrol", "ssp126", "ssp534-over", "ssp585")
 
 # Create output directory if it doesn't exist
-if (!dir.exists(dirname(paste0(out_dir,.Platform$file.sep,"ClimateChange_Compiled.rds")))) {
-  dir.create(dirname(paste0(out_dir,.Platform$file.sep,"ClimateChange_Compiled.rds")), recursive = TRUE)
+if (!dir.exists(dirname(paste0(out_dir,.Platform$file.sep,"2300_Compiled.rds")))) {
+  dir.create(dirname(paste0(out_dir,.Platform$file.sep,"2300_Compiled.rds")), recursive = TRUE)
 }
 
 # Process each model-experiment combination separately and save to separate files
@@ -185,7 +31,7 @@ for (m in 1:length(ModelArray)) {
 
     # Create a unique identifier for this combination
     combo_id <- paste0(ModelArray[m], "_", exp)
-    output_file <- paste0(out_dir, .Platform$file.sep, "ClimateChange_", combo_id, ".rds")
+    output_file <- paste0(out_dir, .Platform$file.sep, "2300_", combo_id, ".rds")
 
     # Skip if already processed
     if (file.exists(output_file)) {
@@ -344,7 +190,7 @@ for (m in 1:length(ModelArray)) {
         gc()
 
         # Save intermediate results after each batch to avoid memory issues
-        intermediate_file <- paste0(out_dir, .Platform$file.sep, "ClimateChange_", combo_id, "_temp.rds")
+        intermediate_file <- paste0(out_dir, .Platform$file.sep, "2300_", combo_id, "_temp.rds")
         write_rds(result_df, intermediate_file)
         cat("    Saved intermediate results to", intermediate_file, "\n")
       }
@@ -354,7 +200,7 @@ for (m in 1:length(ModelArray)) {
       cat("  Data saved to:", output_file, "\n")
 
       # Remove intermediate file
-      intermediate_file <- paste0(out_dir, .Platform$file.sep, "ClimateChange_", combo_id, "_temp.rds")
+      intermediate_file <- paste0(out_dir, .Platform$file.sep, "2300_", combo_id, "_temp.rds")
       if(file.exists(intermediate_file)) {
         file.remove(intermediate_file)
       }
@@ -382,7 +228,7 @@ cat("To combine all files into a single dataset, run the following code:\n\n")
 
 cat('
 # Combine all individual files
-all_files <- list.files(paste0(out_dir), pattern = "ClimateChange_.*.rds", full.names = TRUE)
+all_files <- list.files(paste0(out_dir), pattern = "2300_.*.rds", full.names = TRUE)
 all_files <- all_files[!grepl("_temp.rds$", all_files)]  # Exclude any temporary files
 combined_df <- NULL
 
@@ -402,8 +248,8 @@ for (file in all_files) {
 }
 
 # Save the combined dataset
-write_rds(combined_df, paste0(out_dir, .Platform$file.sep, "ClimateChange_Compiled.rds"))
-cat("Combined dataset saved to:", paste0(out_dir, .Platform$file.sep, "ClimateChange_Compiled.rds"), "\n")
+write_rds(combined_df, paste0(out_dir, .Platform$file.sep, "2300_Compiled.rds"))
+cat("Combined dataset saved to:", paste0(out_dir, .Platform$file.sep, "2300_Compiled.rds"), "\n")
 ')
-```
+
 
