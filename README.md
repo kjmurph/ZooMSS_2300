@@ -3,12 +3,14 @@
 Use ZooMSS to assess the impacts of climate change on the structure of the global zooplankton community, and its role in mediating energy from phytoplankton to fish for long term simulations out to 2300.
 
 ## Datasets ##
-Annual average surface chlorophyll (chlos), converted from phytoplankton carbon concentration (phyc) and surface temperature (tos) netcdfs for 
-* historical (1850-2014)
-* picontrol (1850 - 2014)
+Annual average surface chlorophyll (chlo: mg m-3), converted from phytoplankton carbon concentration (phyc: mol m-3) and surface temperature (tos: oC) netcdfs for 
+* historical (1850 - 2014)
+* picontrol (1601 - 2014): Preindustrial climate as simulated by the ESM, minimum 50 years, ending on last year of picontrol
 * ssp126 (2015-2300), 
 * ssp534-over (2015-2300) and 
-* ssp585 (2015-2300) climate simulations 
+* ssp585 (2015-2300) climate simulations
+
+* nat: No fishing (naturalised run)
 
 ## Earth System Models Used
 * CESM2, 
@@ -17,4 +19,22 @@ Annual average surface chlorophyll (chlos), converted from phytoplankton carbon 
 
 Required runs
 For each dataset, we need to complete these runs:
-1)	The standard model run, with all groups included
+1)	The standard model run, with all zooplankton groups included
+
+## Mandatory outputs from ZooMSS for protocol
+Mandatory output from global models.
+
+- Total Consumer Biomass Density: tcb (g m-2)
+    All consumers (trophic level >1, vertebrates and invertebrates)
+
+- Total Consumer Biomass Density in log10 Weight Bins: tcblog10 (g m-2)
+    Level dimensions: (time, bins, lat, lon).
+    If the model is size-structured, please provide biomass in equal log 10 g weight bins (1-10g, 10-100g, 100g-1kg, 1-10kg, 10-100kg, >100kg)
+
+- Total Pelagic Biomass Density: tpb (g m-2)
+    All pelagic consumers (trophic level >1, vertebrates and invertebrates)
+  
+- Total Demersal Biomass Density: tdb (g m-2)
+    All demersal consumers (trophic level >1, vertebrates and invertebrates)
+
+
