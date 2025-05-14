@@ -7,7 +7,7 @@ library(raster)
 library(dplyr)
 
 # Open the NetCDF file
-nc_file <- nc_open("~/R Projects/ZooMSS_2300_github/Input/phyc/cesm2-waccm_r1i1p1f1_picontrol_phyc-top_60arcmin_global_annual_1601_2100.nc")
+nc_file <- nc_open("~/R Projects/ZooMSS_2300/Input/phyc/cesm2-waccm_r1i1p1f1_picontrol_phyc-top_60arcmin_global_annual_1601_2100.nc")
 
 # Print information about the file
 print(nc_file)
@@ -40,7 +40,7 @@ nc_close(nc_file)
 # Run this code on your files, and let me know the results. Then I can help you develop a strategy for standardizing the units (if needed) and converting to chlorophyll.
 
 # Define path to your folder
-folder_path <- "~/R Projects/ZooMSS_2300_github/Input"
+folder_path <- "~/R Projects/ZooMSS_2300/Input"
 
 # Function to extract units and metadata for phyc variable
 extract_phyc_info <- function(file_path) {
@@ -175,10 +175,10 @@ if(!are_units_consistent) {
 
 
 # Path to your folder with phyc files
-folder_path <- "C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/R Projects/ZooMSS_2300_github/Input/phyc"
+folder_path <- "C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/R Projects/ZooMSS_2300/Input/phyc"
 
 # Define output folder for converted files
-output_folder <- "C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/R Projects/ZooMSS_2300_github/Input/chla"
+output_folder <- "C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/R Projects/ZooMSS_2300/Input/chla"
 
 # Create output directory if it doesn't exist
 if (!dir.exists(output_folder)) {
@@ -406,7 +406,7 @@ library(ggplot2)
 library(stringr)
 
 # Path to your chlorophyll files
-chla_folder <- "C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/R Projects/ZooMSS_2300_github/Input/chl"
+chla_folder <- "C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/R Projects/ZooMSS_2300/Input/chl"
 
 # Get list of all .nc files
 chla_files <- list.files(chla_folder, pattern = "*.nc$", full.names = TRUE)
