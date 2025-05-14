@@ -1,5 +1,4 @@
 
-```{r}
 # Comprehensive script to process RDS files and create SST vs Chl visualizations
 # Combining memory-efficient processing with Jason Everett's visualization approach
 
@@ -347,4 +346,3 @@ run_workflow <- function(folder_path) {
 # Execute the workflow with your folder path
 folder_path <- "~/R Projects/ZooMSS_2300/Input/2300_processed/"
 run_workflow(folder_path)
-```
