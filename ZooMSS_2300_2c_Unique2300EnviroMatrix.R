@@ -195,6 +195,8 @@ source("fZooMSS_Xtras.R")
 
 sst_chl_with_phyto_params <- fZooMSS_CalculatePhytoParam(novel_2300_combinations)
 
+all_sst_chl_2300_with_phyto_params <- fZooMSS_CalculatePhytoParam(sst_chl_2300_prepared)
+
 # Check against enviro matrix from enviro <- "~/Nextcloud/MME2Work/ZooMSS/_LatestModel/20200917_CMIP_Matrix/enviro_CMIP_Matrix_wPhyto.RDS"
 enviro_CMIP_Matrix_wPhyto <- readRDS("Enviro_Matrix/enviro_CMIP_Matrix_wPhyto.RDS")
 glimpse(enviro_CMIP_Matrix_wPhyto)
@@ -206,6 +208,10 @@ enviro_CMIP_Matrix_wPhyto_filtered <- enviro_CMIP_Matrix_wPhyto %>%
 # Save results with descriptive names
 saveRDS(sst_chl_with_phyto_params,
         "Enviro_Matrix/novel_sst_chl_combinations_2300_wPhyto.rds")
+
+# Save results with descriptive names
+saveRDS(all_sst_chl_2300_with_phyto_params,
+        "Enviro_Matrix/all_sst_chl_combinations_2300_wPhyto.rds")
 
 
 # ==============================================================================
