@@ -1,126 +1,220 @@
 library(tidyverse)
 library(data.table)
 
-## Test example with one model/experiment combo
-df_cesm_hist <- readRDS("~/R Projects/ZooMSS_2300/Input/2300_processed/2300_cesm2-waccm_historical.rds") # "~/Nextcloud/MME2Data/ZooMSS_2300/Inputs/2300_processed/..."
+# ==============================================================================
+# SST-CHLOROPHYLL COMBINATION ANALYSIS WORKFLOW
+# ==============================================================================
+# Purpose: Extract unique SST-chlorophyll combinations from 2300 simulation data
+#          and identify combinations that are novel compared to existing
+#          Climate Change project data
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# SECTION 1: INITIAL DATA EXPLORATION
+# ------------------------------------------------------------------------------
+# Load a single file to understand data structure and get initial statistics
+
+# Load sample file for exploration
+df_cesm_hist <- readRDS("~/R Projects/ZooMSS_2300/Input/2300_processed/2300_cesm2-waccm_historical.rds")
 
 glimpse(df_cesm_hist)
 
-# Get unique combinations of SST and Chl
-unique_combinations <- unique(df_cesm_hist[, c("SST", "Chl_log10")])
+# Analyze data density to understand potential for reduction
+sst_chl_combinations_sample <- unique(df_cesm_hist[, c("SST", "Chl_log10")])
 
-# Print statistics
-cat("Original data count:", nrow(df_cesm_hist), "\n")
-cat("Unique combinations count:", nrow(unique_combinations), "\n")
-cat("Data reduction:", round((nrow(df_cesm_hist) - nrow(unique_combinations)) / nrow(df_cesm_hist) * 100, 2), "%\n")
+# Print data reduction statistics
+cat("=== Initial Data Analysis ===\n")
+cat("Original data points:", nrow(df_cesm_hist), "\n")
+cat("Unique SST-Chl combinations:", nrow(sst_chl_combinations_sample), "\n")
+cat("Data reduction potential:", round((nrow(df_cesm_hist) - nrow(sst_chl_combinations_sample)) / nrow(df_cesm_hist) * 100, 2), "%\n")
 
-process_rds_files <- function(folder_path) {
-  # Get list of all .rds files in the folder
-  all_files <- list.files(path = folder_path, pattern = "\\.rds$", full.names = TRUE)
+# ------------------------------------------------------------------------------
+# SECTION 2: EXTRACT ALL UNIQUE SST-CHLOROPHYLL COMBINATIONS FROM 2300 DATA
+# ------------------------------------------------------------------------------
 
-  # Create empty master data.table
-  master_dt <- data.table(SST = numeric(), Chl_log10 = numeric())
+process_simulation_files <- function(folder_path) {
+  # Get all .rds files in the specified folder
+  rds_files <- list.files(path = folder_path, pattern = "\\.rds$", full.names = TRUE)
 
-  # Track progress
-  total_files <- length(all_files)
-  cat("Processing", total_files, ".rds files...\n")
+  # Initialize master data.table to store all unique combinations
+  master_sst_chl_combinations <- data.table(SST = numeric(), Chl_log10 = numeric())
 
-  # Process each file
-  for (i in seq_along(all_files)) {
-    file_path <- all_files[i]
+  # Progress tracking
+  total_files <- length(rds_files)
+  cat("\n=== Processing", total_files, "simulation files ===\n")
+
+  # Process each simulation file
+  for (i in seq_along(rds_files)) {
+    file_path <- rds_files[i]
     file_name <- basename(file_path)
 
     # Progress update
-    cat(sprintf("[%d/%d] Processing file: %s\n", i, total_files, file_name))
+    cat(sprintf("[%d/%d] Processing: %s\n", i, total_files, file_name))
 
-    # Read current RDS file
-    current_df <- readRDS(file_path)
+    # Load current simulation data
+    current_simulation <- readRDS(file_path)
 
-    # Convert to data.table if it's not already
-    if (!is.data.table(current_df)) {
-      current_dt <- as.data.table(current_df[, c("SST", "Chl_log10")])
+    # Convert to data.table and select only SST and Chl_log10 columns
+    current_dt <- if (!is.data.table(current_simulation)) {
+      as.data.table(current_simulation[, c("SST", "Chl_log10")])
     } else {
-      current_dt <- current_df[, .(SST, Chl_log10)]
+      current_simulation[, .(SST, Chl_log10)]
     }
 
-    # Get unique combinations from current file
-    current_unique <- unique(current_dt)
+    # Extract unique combinations from current file
+    unique_combinations_current <- unique(current_dt)
 
-    # If master is empty, initialize it with first file's unique values
-    if (nrow(master_dt) == 0) {
-      master_dt <- current_unique
-      cat(sprintf("  Added %d unique combinations to master data.table\n", nrow(current_unique)))
+    # Handle first file initialization
+    if (nrow(master_sst_chl_combinations) == 0) {
+      master_sst_chl_combinations <- unique_combinations_current
+      cat(sprintf("  → Added %d combinations to master collection\n", nrow(unique_combinations_current)))
     } else {
-      # Find new combinations efficiently using data.table syntax
-      setkey(master_dt, SST, Chl_log10)
-      setkey(current_unique, SST, Chl_log10)
+      # Use data.table's efficient anti-join to find new combinations
+      setkey(master_sst_chl_combinations, SST, Chl_log10)
+      setkey(unique_combinations_current, SST, Chl_log10)
 
-      # Find rows in current_unique that aren't in master_dt
-      new_combinations <- current_unique[!master_dt]
+      # Find combinations in current file not yet in master collection
+      new_combinations <- unique_combinations_current[!master_sst_chl_combinations]
 
-      # Add new combinations to master
+      # Add new combinations if any exist
       if (nrow(new_combinations) > 0) {
-        master_dt <- rbindlist(list(master_dt, new_combinations))
-        cat(sprintf("  Added %d new unique combinations to master data.table\n", nrow(new_combinations)))
+        master_sst_chl_combinations <- rbindlist(list(master_sst_chl_combinations, new_combinations))
+        cat(sprintf("  → Added %d NEW combinations\n", nrow(new_combinations)))
       } else {
-        cat("  No new unique combinations found in this file\n")
+        cat("  → No new combinations found\n")
       }
     }
 
-    # Report current size of master dataframe
-    cat(sprintf("  Master data.table now contains %d unique combinations\n", nrow(master_dt)))
+    cat(sprintf("  → Total unique combinations: %d\n", nrow(master_sst_chl_combinations)))
   }
 
-  cat("Processing complete!\n")
-  cat("Final master data.table contains", nrow(master_dt), "unique SST and Chl_log10 combinations\n")
+  cat("\n=== File Processing Complete ===\n")
+  cat("Final count of unique SST-Chlorophyll combinations:", nrow(master_sst_chl_combinations), "\n")
 
-  # Return the master data.table
-  return(master_dt)
+  return(master_sst_chl_combinations)
 }
 
+# Process all 2300 simulation files
+folder_path <- "~/R Projects/ZooMSS_2300/Input/2300_processed/"
+all_2300_sst_chl_combinations <- process_simulation_files(folder_path)
 
-folder_path <- "~/R Projects/ZooMSS_2300/Input/2300_processed/" # "~/Nextcloud/MME2Data/ZooMSS_2300/Inputs/2300_processed/..."
-master_dt <- process_rds_files(folder_path)
+# Save complete set of 2300 combinations for future reference
+saveRDS(all_2300_sst_chl_combinations,
+        "Enviro_Matrix/all_2300_sst_chl_combinations_complete.rds")
 
-# Save results
-saveRDS(master_dt, "Enviro_Matrix/enviro_matrix_2300_all_unique_sst_chl_log10_combinations.rds")
+# ------------------------------------------------------------------------------
+# SECTION 3: PREPARE DATA FOR COMPARISON
+# ------------------------------------------------------------------------------
 
-enviro_data <- master_dt %>%
-  mutate(chlo = 10^Chl_log10) %>%
-  dplyr::select(c(SST, chlo)) %>%
-  arrange(desc(chlo), desc(SST)) %>%
-  filter(is.na(chlo)==FALSE) %>%
-  filter(is.na(SST)==FALSE) %>%
-  rename(sst = SST)
+# Transform data for analysis:
+# 1. Convert log10(chlorophyll) back to chlorophyll
+# 2. Rename columns for consistency
+# 3. Remove any missing values
+# 4. Sort for easier inspection
 
+sst_chl_2300_prepared <- all_2300_sst_chl_combinations %>%
+  mutate(chlo = 10^Chl_log10) %>%          # Convert from log10 back to original scale
+  select(SST, chlo) %>%                     # Select and rename columns
+  rename(sst = SST) %>%                     # Standardize column names
+  filter(!is.na(chlo), !is.na(sst)) %>%    # Remove any missing values
+  arrange(desc(chlo), desc(sst)) %>%        # Sort by chlorophyll (desc), then SST (desc)
+  distinct()                                # Ensure uniqueness after transformations
 
-# Read in distinct SST-chl combinations from Climate Change repo
-ClimateChange_Compiled_Distinct <- readRDS("Enviro_Matrix/ClimateChange_Compiled_Distinct.RDS")
+cat("=== Data Preparation Summary ===\n")
+cat("2300 combinations after preparation:", nrow(sst_chl_2300_prepared), "\n")
 
+# ------------------------------------------------------------------------------
+# SECTION 4: IDENTIFY NOVEL COMBINATIONS VS CLIMATE CHANGE DATA
+# ------------------------------------------------------------------------------
 
-# Create a dataframe of unique combinations from enviro_data
-enviro_2300_unique <- unique(enviro_data[, c("sst", "chlo")])
+# Load existing Climate Change project data for comparison
+climate_change_sst_chl <- readRDS("Enviro_Matrix/ClimateChange_Compiled_Distinct.RDS")
 
-# Create a dataframe of unique combinations from ClimateChange_Compiled_Distinct
-climate_change_unique <- unique(ClimateChange_Compiled_Distinct[, c("sst", "chlo")])
+# Ensure both datasets have identical column structures
+climate_change_prepared <- climate_change_sst_chl %>%
+  select(sst, chlo) %>%
+  filter(!is.na(chlo), !is.na(sst)) %>%
+  distinct()
 
-# Find rows in enviro_2300_unique that are not in climate_change_unique
-enviro_2300_distinct <- anti_join(enviro_2300_unique, climate_change_unique, by = c("sst", "chlo"))
+# Find combinations that exist in 2300 data but NOT in Climate Change data
+novel_2300_combinations <- anti_join(sst_chl_2300_prepared,
+                                     climate_change_prepared,
+                                     by = c("sst", "chlo"))
 
-enviro_2300_distinct_trim <- enviro_2300_distinct %>%
-  filter(!chlo>10)
+# Apply chlorophyll filter to remove extreme values (optional)
+novel_2300_combinations_filtered <- novel_2300_combinations %>%
+  filter(chlo <= 10)  # Remove chlorophyll values > 10
 
-# plot the unique 2300
-ggplot(data = enviro_2300_distinct, mapping = aes(x = sst, y = log10(chlo))) +
+cat("=== Comparison Results ===\n")
+cat("Climate Change combinations:", nrow(climate_change_prepared), "\n")
+cat("2300 combinations:", nrow(sst_chl_2300_prepared), "\n")
+cat("Novel 2300 combinations (not in Climate Change):", nrow(novel_2300_combinations), "\n")
+cat("Novel 2300 combinations (filtered):", nrow(novel_2300_combinations_filtered), "\n")
+
+# ------------------------------------------------------------------------------
+# SECTION 5: VISUALIZATION AND OUTPUT
+# ------------------------------------------------------------------------------
+
+# Create visualization of novel combinations
+p_novel_combinations <- ggplot(data = novel_2300_combinations,
+                               mapping = aes(x = sst, y = log10(chlo))) +
   geom_hex() +
-  scale_fill_continuous(type = "viridis") +
-  theme_bw()
+  scale_fill_continuous(type = "viridis", name = "Count") +
+  labs(
+    title = "Novel SST-Chlorophyll Combinations in 2300 Simulations",
+    subtitle = "Combinations not present in Climate Change dataset",
+    x = "Sea Surface Temperature (°C)",
+    y = "log₁₀(Chlorophyll)"
+  ) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 14, hjust = 0.5),
+    plot.subtitle = element_text(size = 12, hjust = 0.5)
+  )
 
-saveRDS(enviro_2300_distinct, "Enviro_Matrix/enviro_matrix_unique_to_2300.RDS")
+print(p_novel_combinations)
 
+ggsave("Figures/Novel_SSTChl_2300.png", p_novel_combinations, width = 12, height = 8, dpi = 300)
+
+# Save results with descriptive names
+saveRDS(novel_2300_combinations,
+        "Enviro_Matrix/novel_sst_chl_combinations_2300_vs_climate_change.rds")
+
+saveRDS(novel_2300_combinations_filtered,
+        "Enviro_Matrix/novel_sst_chl_combinations_2300_filtered.rds")
+
+
+# ------------------------------------------------------------------------------
+# SECTION 6: CALCULATE PHYTOPLANKTON PARAMETERS (if needed)
+# ------------------------------------------------------------------------------
+
+# Load additional functions if required
 source("fZooMSS_Xtras.R")
 
-enviro_wPhyto <- fZooMSS_CalculatePhytoParam(enviro_2300_distinct)
+# Calculate phytoplankton parameters for novel combinations
+
+sst_chl_with_phyto_params <- fZooMSS_CalculatePhytoParam(novel_2300_combinations)
+
+# Check against enviro matrix from enviro <- "~/Nextcloud/MME2Work/ZooMSS/_LatestModel/20200917_CMIP_Matrix/enviro_CMIP_Matrix_wPhyto.RDS"
+enviro_CMIP_Matrix_wPhyto <- readRDS("Enviro_Matrix/enviro_CMIP_Matrix_wPhyto.RDS")
+glimpse(enviro_CMIP_Matrix_wPhyto)
+
+enviro_CMIP_Matrix_wPhyto_filtered <- enviro_CMIP_Matrix_wPhyto %>%
+  filter(chlo <= 10)  # Remove chlorophyll values > 10
+# This is almost the same number of combinations from the 'climate_change_sst_chl' enviro matrix
+
+# Save results with descriptive names
+saveRDS(sst_chl_with_phyto_params,
+        "Enviro_Matrix/novel_sst_chl_combinations_2300_wPhyto.rds")
 
 
-
+# ==============================================================================
+# WORKFLOW SUMMARY
+# ==============================================================================
+# 1. Extracted unique SST-Chlorophyll combinations from all 2300 simulation files
+# 2. Prepared data by converting log10(chl) back to chlorophyll and standardizing
+# 3. Compared with existing Climate Change project data
+# 4. Identified novel combinations unique to 2300 simulations
+# 5. Applied optional filtering and created visualization
+# 6. Saved results with descriptive filenames
+# ==============================================================================
