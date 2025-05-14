@@ -25,7 +25,7 @@ For each dataset, we need to complete these runs:
 1)	The standard model run, with all zooplankton groups included
 
 ## Enviro matrices
-* `novel_sst_chl_combinations_2300_wPhyto.rds` in `Enviro_Matrix` folder contains all combinations of sst-chlo from the 2300 ESM inputs no already run in `ZooMSS_Climate_Change`
+* `novel_sst_chl_combinations_2300_wPhyto.rds` in `Enviro_Matrix` folder contains all combinations of sst-chlo from the 2300 ESM inputs not already run in `ZooMSS_Climate_Change`
 * `all_sst_chl_combinations_2300_wPhyto.rds` in `Enviro_Matrix` folder contains all combinations of sst-chlo from the 2300 ESM inputs
 * `ClimateChange_Compiled_Distinct.rds` in `Enviro_Matrix` folder is from ZooMSS_Climate_Change
 * `enviro_CMIP_Matrix_wPhyto.RDS` in `Enviro_Matrix` folder is from ZooMSS_Climate_Change
