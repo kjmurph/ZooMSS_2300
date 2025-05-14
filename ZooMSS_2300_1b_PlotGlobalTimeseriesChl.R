@@ -9,25 +9,25 @@ plot(raster(cell_areas))
 # Load all NetCDF files for chlorophyll (chla)
 
 # CESM2
-chla_hist_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/cesm2-waccm_r1i1p1f1_historical_chla-top_60arcmin_global_annual_1850_2014.nc"), "chla")
-chla_picontrol_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/cesm2-waccm_r1i1p1f1_picontrol_chla-top_60arcmin_global_annual_1601_2100.nc"), "chla")
-chla_ssp126_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/cesm2-waccm_r1i1p1f1_ssp126_chla-top_60arcmin_global_annual_2015_2299.nc"), "chla")
-chla_ssp535_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/cesm2-waccm_r1i1p1f1_ssp534-over_chla-top_60arcmin_global_annual_2040_2299.nc"), "chla")
-chla_ssp585_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/cesm2-waccm_r1i1p1f1_ssp585_chla-top_60arcmin_global_annual_2015_2299.nc"), "chla")
+chla_hist_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/cesm2-waccm_r1i1p1f1_historical_chla-top_60arcmin_global_annual_1850_2014.nc"), "chla")
+chla_picontrol_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/cesm2-waccm_r1i1p1f1_picontrol_chla-top_60arcmin_global_annual_1601_2100.nc"), "chla")
+chla_ssp126_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/cesm2-waccm_r1i1p1f1_ssp126_chla-top_60arcmin_global_annual_2015_2299.nc"), "chla")
+chla_ssp535_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/cesm2-waccm_r1i1p1f1_ssp534-over_chla-top_60arcmin_global_annual_2040_2299.nc"), "chla")
+chla_ssp585_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/cesm2-waccm_r1i1p1f1_ssp585_chla-top_60arcmin_global_annual_2015_2299.nc"), "chla")
 
 # IPSL
-chla_hist_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/ipsl-cm6a-lr_r1i1p1f1_historical_chla-top_60arcmin_global_annual_1850_2014.nc"), "chla")
-chla_picontrol_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/ipsl-cm6a-lr_r1i1p1f1_picontrol_chla-top_60arcmin_global_annual_1601_2100.nc"), "chla")
-chla_ssp126_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/ipsl-cm6a-lr_r1i1p1f1_ssp126_chla-top_60arcmin_global_annual_2015_2300.nc"), "chla")
-chla_ssp535_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/ipsl-cm6a-lr_r1i1p1f1_ssp534-over_chla-top_60arcmin_global_annual_2040_2300.nc"), "chla")
-chla_ssp585_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/ipsl-cm6a-lr_r1i1p1f1_ssp585_chla-top_60arcmin_global_annual_2015_2300.nc"), "chla")
+chla_hist_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/ipsl-cm6a-lr_r1i1p1f1_historical_chla-top_60arcmin_global_annual_1850_2014.nc"), "chla")
+chla_picontrol_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/ipsl-cm6a-lr_r1i1p1f1_picontrol_chla-top_60arcmin_global_annual_1601_2100.nc"), "chla")
+chla_ssp126_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/ipsl-cm6a-lr_r1i1p1f1_ssp126_chla-top_60arcmin_global_annual_2015_2300.nc"), "chla")
+chla_ssp535_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/ipsl-cm6a-lr_r1i1p1f1_ssp534-over_chla-top_60arcmin_global_annual_2040_2300.nc"), "chla")
+chla_ssp585_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/ipsl-cm6a-lr_r1i1p1f1_ssp585_chla-top_60arcmin_global_annual_2015_2300.nc"), "chla")
 
 # UKESM
-chla_hist_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/ukesm1-0-ll_r1i1p1f2_historical_chla-top_60arcmin_global_annual_1850_2014.nc"), "chla")
-chla_picontrol_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/ukesm1-0-ll_r1i1p1f2_picontrol_chla-top_60arcmin_global_annual_1601_2100.nc"), "chla")
-chla_ssp126_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/ukesm1-0-ll_r4i1p1f2_ssp126_chla-top_60arcmin_global_annual_2015_2300.nc"), "chla")
-chla_ssp535_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/ukesm1-0-ll_r4i1p1f2_ssp534-over_chla-top_60arcmin_global_annual_2040_2100.nc"), "chla")
-chla_ssp585_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/chl/ukesm1-0-ll_r4i1p1f2_ssp585_chla-top_60arcmin_global_annual_2015_2300.nc"), "chla")
+chla_hist_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/ukesm1-0-ll_r1i1p1f2_historical_chla-top_60arcmin_global_annual_1850_2014.nc"), "chla")
+chla_picontrol_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/ukesm1-0-ll_r1i1p1f2_picontrol_chla-top_60arcmin_global_annual_1601_2100.nc"), "chla")
+chla_ssp126_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/ukesm1-0-ll_r4i1p1f2_ssp126_chla-top_60arcmin_global_annual_2015_2300.nc"), "chla")
+chla_ssp535_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/ukesm1-0-ll_r4i1p1f2_ssp534-over_chla-top_60arcmin_global_annual_2040_2100.nc"), "chla")
+chla_ssp585_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/chl/ukesm1-0-ll_r4i1p1f2_ssp585_chla-top_60arcmin_global_annual_2015_2300.nc"), "chla")
 
 # Create ocean mask and areas for CESM2
 # Cut out land cells from cell area matrix (using chlorophyll data to define ocean cells)

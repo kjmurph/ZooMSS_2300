@@ -8,22 +8,22 @@ plot(raster(cell_areas))
 # Load all NetCDF files (as in your code)
 
 # CESM2
-tos_hist_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/tos/cesm2-waccm_r1i1p1f1_historical_tos_60arcmin_global_annual_1850_2014.nc"), "tos")
-tos_picontrol_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/tos/cesm2-waccm_r1i1p1f1_picontrol_tos_60arcmin_global_annual_1601_2100.nc"), "tos")
-tos_ssp126_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/tos/cesm2-waccm_r1i1p1f1_ssp126_tos_60arcmin_global_annual_2015_2299.nc"), "tos")
-tos_ssp585_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/tos/cesm2-waccm_r1i1p1f1_ssp585_tos_60arcmin_global_annual_2015_2299.nc"), "tos")
+tos_hist_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/tos/cesm2-waccm_r1i1p1f1_historical_tos_60arcmin_global_annual_1850_2014.nc"), "tos")
+tos_picontrol_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/tos/cesm2-waccm_r1i1p1f1_picontrol_tos_60arcmin_global_annual_1601_2100.nc"), "tos")
+tos_ssp126_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/tos/cesm2-waccm_r1i1p1f1_ssp126_tos_60arcmin_global_annual_2015_2299.nc"), "tos")
+tos_ssp585_cesm2 <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/tos/cesm2-waccm_r1i1p1f1_ssp585_tos_60arcmin_global_annual_2015_2299.nc"), "tos")
 
 # IPSL
-tos_hist_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/tos/ipsl-cm6a-lr_r1i1p1f1_historical_tos_60arcmin_global_annual_1850_2014.nc"), "tos")
-tos_picontrol_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/tos/ipsl-cm6a-lr_r1i1p1f1_picontrol_tos_60arcmin_global_annual_1601_2100.nc"), "tos")
-tos_ssp126_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/tos/ipsl-cm6a-lr_r1i1p1f1_ssp126_tos_60arcmin_global_annual_2015_2300.nc"), "tos")
-tos_ssp585_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/tos/ipsl-cm6a-lr_r1i1p1f1_ssp585_tos_60arcmin_global_annual_2015_2300.nc"), "tos")
+tos_hist_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/tos/ipsl-cm6a-lr_r1i1p1f1_historical_tos_60arcmin_global_annual_1850_2014.nc"), "tos")
+tos_picontrol_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/tos/ipsl-cm6a-lr_r1i1p1f1_picontrol_tos_60arcmin_global_annual_1601_2100.nc"), "tos")
+tos_ssp126_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/tos/ipsl-cm6a-lr_r1i1p1f1_ssp126_tos_60arcmin_global_annual_2015_2300.nc"), "tos")
+tos_ssp585_ipsl <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/tos/ipsl-cm6a-lr_r1i1p1f1_ssp585_tos_60arcmin_global_annual_2015_2300.nc"), "tos")
 
 # UKESM
-tos_hist_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/tos/ukesm1-0-ll_r4i1p1f2_historical_tos_60arcmin_global_annual_1850_2014.nc"), "tos")
-tos_picontrol_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/tos/ukesm1-0-ll_r1i1p1f2_picontrol_tos_60arcmin_global_annual_1601_2100.nc"), "tos")
-tos_ssp126_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/tos/ukesm1-0-ll_r4i1p1f2_ssp126_tos_60arcmin_global_annual_2015_2300.nc"), "tos")
-tos_ssp585_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300_github/Input/tos/ukesm1-0-ll_r4i1p1f2_ssp585_tos_60arcmin_global_annual_2015_2300.nc"), "tos")
+tos_hist_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/tos/ukesm1-0-ll_r4i1p1f2_historical_tos_60arcmin_global_annual_1850_2014.nc"), "tos")
+tos_picontrol_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/tos/ukesm1-0-ll_r1i1p1f2_picontrol_tos_60arcmin_global_annual_1601_2100.nc"), "tos")
+tos_ssp126_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/tos/ukesm1-0-ll_r4i1p1f2_ssp126_tos_60arcmin_global_annual_2015_2300.nc"), "tos")
+tos_ssp585_ukesm <- var.get.nc(open.nc("~/R Projects/ZooMSS_2300/Input/tos/ukesm1-0-ll_r4i1p1f2_ssp585_tos_60arcmin_global_annual_2015_2300.nc"), "tos")
 
 # Create ocean mask and areas for CESM2
 # Cut out land cells from cell area matrix
