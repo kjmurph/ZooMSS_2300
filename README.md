@@ -12,6 +12,9 @@ Annual average surface chlorophyll (chlo: mg m-3), converted from phytoplankton 
 
 * nat: No fishing (naturalised run)
 
+Files too large for github tracking, so Inputs/ is in .gitignore
+Inputs found on RDM in MME1Data/ZooMSS_2300/Inputs
+
 ## Earth System Models Used
 * CESM2, 
 * IPSL-CM6A-LR, 
