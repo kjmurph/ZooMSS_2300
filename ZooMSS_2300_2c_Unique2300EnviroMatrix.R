@@ -14,6 +14,9 @@ library(data.table)
 # ------------------------------------------------------------------------------
 # Load a single file to understand data structure and get initial statistics
 
+# RDM storage for Inputs folder
+#~/Nextcloud/MME1Data/ZooMSS_2300/Inputs/...
+
 # Load sample file for exploration
 df_cesm_hist <- readRDS("~/R Projects/ZooMSS_2300/Input/2300_processed/2300_cesm2-waccm_historical.rds")
 
