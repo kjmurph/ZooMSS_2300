@@ -1,0 +1,57 @@
+INFO [2025-08-11 18:08:56] === ZooMSS_MasterPipeline Session Started ===
+INFO [2025-08-11 18:08:56] Timestamp: 2025-08-11 18:08:56.559112
+INFO [2025-08-11 18:08:56] R Version: R version 4.5.1 (2025-06-13 ucrt)
+INFO [2025-08-11 18:08:56] Working Directory: C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/GitHub/ZooMSS_2300
+INFO [2025-08-11 18:08:56] Log File: logs/ZooMSS_MasterPipeline_20250811_180856.log
+INFO [2025-08-11 18:08:56] Random seed set to: 123
+INFO [2025-08-11 18:08:56] Pipeline execution plan:
+INFO [2025-08-11 18:08:56]   - Area Weighting: TRUE
+INFO [2025-08-11 18:08:56]   - Spatial Validation: TRUE
+INFO [2025-08-11 18:08:56]   - Enhanced Plotting: TRUE
+INFO [2025-08-11 18:08:56]   - Full Validation: TRUE
+INFO [2025-08-11 18:08:56] CHECKPOINT: Pre-execution validation
+INFO [2025-08-11 18:08:56] Memory Usage - Pre-execution validation: 173.9 MB
+INFO [2025-08-11 18:08:56] Current memory usage: 173.9 MB
+INFO [2025-08-11 18:08:56] Memory allocation test passed
+INFO [2025-08-11 18:08:56] Found 15 biomass projection files
+INFO [2025-08-11 18:08:56] === PIPELINE EXECUTION STARTED ===
+INFO [2025-08-11 18:08:57] CHECKPOINT: Starting Corrected Area Weighting Analysis
+INFO [2025-08-11 18:08:57] Memory Usage - Starting Corrected Area Weighting Analysis: 173.9 MB
+INFO [2025-08-11 18:08:57] Corrected timeseries already exists: Output/combined_corrected_biomass_timeseries.rds
+INFO [2025-08-11 18:08:57] Skipping area weighting - using existing data
+INFO [2025-08-11 18:08:57] CHECKPOINT: Corrected Area Weighting Analysis - Duration: 0 minutes
+INFO [2025-08-11 18:08:57] Memory Usage - Corrected Area Weighting Analysis: 174 MB
+INFO [2025-08-11 18:08:57] CHECKPOINT: Starting Spatial Coverage Validation
+INFO [2025-08-11 18:08:57] Memory Usage - Starting Spatial Coverage Validation: 173.9 MB
+INFO [2025-08-11 18:08:57] Running spatial coverage validation
+INFO [2025-08-11 18:10:31] CHECKPOINT: Spatial Coverage Validation - Duration: 1.56 minutes
+INFO [2025-08-11 18:10:31] Memory Usage - Spatial Coverage Validation: 208.3 MB
+INFO [2025-08-11 18:10:31] CHECKPOINT: Starting Enhanced Plotting
+INFO [2025-08-11 18:10:31] Memory Usage - Starting Enhanced Plotting: 208.3 MB
+INFO [2025-08-11 18:10:31] Running enhanced plotting analysis
+INFO [2025-08-11 18:10:35] CHECKPOINT: Enhanced Plotting - Duration: 0.06 minutes
+INFO [2025-08-11 18:10:35] Memory Usage - Enhanced Plotting: 224.8 MB
+INFO [2025-08-11 18:10:35] CHECKPOINT: Starting Comprehensive Validation
+INFO [2025-08-11 18:10:35] Memory Usage - Starting Comprehensive Validation: 224.8 MB
+INFO [2025-08-11 18:10:35] Running comprehensive validation
+INFO [2025-08-11 18:10:35] CHECKPOINT: Comprehensive Validation - Duration: 0 minutes
+INFO [2025-08-11 18:10:35] Memory Usage - Comprehensive Validation: 233.6 MB
+INFO [2025-08-11 18:10:35] === PIPELINE EXECUTION COMPLETED ===
+INFO [2025-08-11 18:10:35] Total execution time: 1.65 minutes
+INFO [2025-08-11 18:10:35] === EXECUTION SUMMARY ===
+INFO [2025-08-11 18:10:35] area_weighting: Skipped - existing data
+INFO [2025-08-11 18:10:35] spatial_validation: Completed successfully
+INFO [2025-08-11 18:10:35] enhanced_plotting: Completed successfully
+INFO [2025-08-11 18:10:35] comprehensive_validation: Completed successfully
+INFO [2025-08-11 18:10:36] Memory Usage - Pipeline completion: 233.6 MB
+INFO [2025-08-11 18:10:36] Processing summary saved to: logs/processing_summary_20250811_181036.txt
+INFO [2025-08-11 18:10:36] === FINAL OUTPUTS VALIDATION ===
+INFO [2025-08-11 18:10:36] ✓ Corrected Timeseries: Available
+WARN [2025-08-11 18:10:36] ✗ Spatial Validation Report: Missing (Output/spatial_coverage_validation_report.rds)
+INFO [2025-08-11 18:10:36] ✓ Enhanced Figures Directory: Available
+INFO [2025-08-11 18:10:36] ✓ Spatial Validation Directory: Available
+INFO [2025-08-11 18:10:36] 🎉 PIPELINE COMPLETED SUCCESSFULLY!
+INFO [2025-08-11 18:10:36] === SESSION INFO ===
+INFO [2025-08-11 18:10:36] R version: R version 4.5.1 (2025-06-13 ucrt)
+INFO [2025-08-11 18:10:36] Platform: x86_64-w64-mingw32/x64
+INFO [2025-08-11 18:10:36] === PIPELINE SESSION ENDED ===

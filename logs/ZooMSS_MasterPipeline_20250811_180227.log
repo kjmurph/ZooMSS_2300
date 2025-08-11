@@ -1,0 +1,18 @@
+INFO [2025-08-11 18:02:27] === ZooMSS_MasterPipeline Session Started ===
+INFO [2025-08-11 18:02:27] Timestamp: 2025-08-11 18:02:27.158454
+INFO [2025-08-11 18:02:27] R Version: R version 4.5.1 (2025-06-13 ucrt)
+INFO [2025-08-11 18:02:27] Working Directory: C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/GitHub/ZooMSS_2300
+INFO [2025-08-11 18:02:27] Log File: logs/ZooMSS_MasterPipeline_20250811_180227.log
+INFO [2025-08-11 18:02:27] Random seed set to: 123
+INFO [2025-08-11 18:02:27] Pipeline execution plan:
+INFO [2025-08-11 18:02:27]   - Area Weighting: TRUE
+INFO [2025-08-11 18:02:27]   - Spatial Validation: TRUE
+INFO [2025-08-11 18:02:27]   - Enhanced Plotting: TRUE
+INFO [2025-08-11 18:02:27]   - Full Validation: TRUE
+INFO [2025-08-11 18:02:27] CHECKPOINT: Pre-execution validation
+INFO [2025-08-11 18:02:27] Memory Usage - Pre-execution validation: 173.9 MB
+ERROR [2025-08-11 18:02:27] ERROR: Insufficient memory available
+ERROR [2025-08-11 18:02:27] Context: Available: 173.9 MB, Required: 4096 MB
+ERROR [2025-08-11 18:02:27] Current working directory: C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/GitHub/ZooMSS_2300
+ERROR [2025-08-11 18:02:27] Available memory: 173.9 MB
+ERROR [2025-08-11 18:02:27] Stopping execution due to critical error

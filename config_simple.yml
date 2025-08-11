@@ -1,0 +1,23 @@
+default:
+  # File paths
+  paths:
+    biomass_projections_dir: "Output/Biomass_projections"
+    output_dir: "Output"
+    figures_dir: "Figures"
+    logs_dir: "logs"
+    enhanced_figures_dir: "Figures/Biomass_Enhanced"
+    spatial_validation_dir: "Figures/Spatial_Coverage_Validation"
+    corrected_timeseries: "Output/combined_corrected_biomass_timeseries.rds"
+    spatial_validation_report: "Output/spatial_coverage_validation_report.rds"
+  
+  # Analysis parameters
+  analysis:
+    random_seed: 123
+    sampling:
+      small_files: 0.15
+      medium_files: 0.08
+      large_files: 0.02
+  
+  # Logging
+  logging:
+    level: "INFO"

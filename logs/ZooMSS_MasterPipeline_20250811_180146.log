@@ -1,0 +1,13 @@
+INFO [2025-08-11 18:01:47] === ZooMSS_MasterPipeline Session Started ===
+INFO [2025-08-11 18:01:47] Timestamp: 2025-08-11 18:01:47.018148
+INFO [2025-08-11 18:01:47] R Version: R version 4.5.1 (2025-06-13 ucrt)
+INFO [2025-08-11 18:01:47] Working Directory: C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/GitHub/ZooMSS_2300
+INFO [2025-08-11 18:01:47] Log File: logs/ZooMSS_MasterPipeline_20250811_180146.log
+INFO [2025-08-11 18:01:47] Random seed set to: 123
+INFO [2025-08-11 18:01:47] Pipeline execution plan:
+INFO [2025-08-11 18:01:47]   - Area Weighting: TRUE
+INFO [2025-08-11 18:01:47]   - Spatial Validation: TRUE
+INFO [2025-08-11 18:01:47]   - Enhanced Plotting: TRUE
+INFO [2025-08-11 18:01:47]   - Full Validation: TRUE
+INFO [2025-08-11 18:01:47] CHECKPOINT: Pre-execution validation
+INFO [2025-08-11 18:01:47] Memory Usage - Pre-execution validation: 173.9 MB

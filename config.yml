@@ -1,0 +1,276 @@
+# ZooMSS_2300 Configuration File
+
+# Default configuration
+default:
+  # ==============================================================================
+  # PROJECT SETTINGS
+  # ==============================================================================
+  project:
+    name: "ZooMSS_2300"
+    version: "1.0.0"
+    description: "Marine ecosystem modeling using Earth System Model outputs for climate projections to 2300"
+    author: "Marine Ecosystem Analysis Team"
+    
+  # ==============================================================================
+  # FILE PATHS AND DIRECTORIES
+  # ==============================================================================
+  paths:
+    # Input directories
+    input_dir: "Input"
+    biomass_projections_dir: "Output/Biomass_projections"
+    environmental_matrix_dir: "Enviro_Matrix"
+    
+    # Output directories
+    output_dir: "Output"
+    figures_dir: "Figures"
+    logs_dir: "logs"
+    
+    # Specific output subdirectories
+    enhanced_figures_dir: "Figures/Biomass_Enhanced"
+    spatial_validation_dir: "Figures/Spatial_Coverage_Validation"
+    
+    # Data files
+    corrected_timeseries: "Output/combined_corrected_biomass_timeseries.rds"
+    original_timeseries: "Output/combined_weighted_biomass_timeseries.rds"
+    spatial_validation_report: "Output/spatial_coverage_validation_report.rds"
+
+  # ==============================================================================
+  # ANALYSIS PARAMETERS
+  # ==============================================================================
+  analysis:
+    # Spatial sampling fractions for memory management
+    sampling:
+      small_files: 0.15    # 15% for files < 2GB
+      medium_files: 0.08   # 8% for files 2-5GB  
+      large_files: 0.02    # 2% for files > 5GB
+      
+    # File size thresholds (GB)
+    file_size_thresholds:
+      small_threshold_gb: 2      # 2GB
+      large_threshold_gb: 5      # 5GB
+      
+    # Memory management
+    memory:
+      max_memory_mb: 8000           # Maximum memory usage before cleanup
+      gc_frequency: 3               # Garbage collection every N files
+      
+    # Area weighting parameters
+    area_weighting:
+      ocean_reference_area_km2: 348882036  # Expected total ocean area
+      tolerance_fraction: 0.01             # ±1% tolerance for validation
+      
+    # Reproducibility
+    random_seed: 123
+  
+# ==============================================================================
+# MODEL AND SCENARIO CONFIGURATION
+# ==============================================================================
+models:
+  earth_system_models:
+    - "cesm2-waccm"
+    - "ipsl-cm6a-lr" 
+    - "ukesm1-0-ll"
+    
+  scenarios:
+    - "historical"
+    - "picontrol"
+    - "ssp126"
+    - "ssp534-over"
+    - "ssp585"
+
+# ==============================================================================
+# SPECIES AND FUNCTIONAL GROUPS
+# ==============================================================================
+species:
+  # Zooplankton functional groups
+  zooplankton:
+    - "Flagellates"
+    - "Ciliates"
+    - "Larvaceans"
+    - "OmniCopepods"
+    - "CarnCopepods"
+    - "Euphausiids"
+    - "Chaetognaths"
+    - "Salps"
+    - "Jellyfish"
+    
+  # Fish functional groups
+  fish:
+    - "Fish_Small"
+    - "Fish_Med"
+    - "Fish_Large"
+    
+  # Aggregate groups
+  aggregates:
+    - "Zooplankton_Total"
+    - "Fish_Total"
+    - "TCB"  # Total Community Biomass
+
+# ==============================================================================
+# VALIDATION PARAMETERS
+# ==============================================================================
+validation:
+  # Spatial extent expectations
+  spatial:
+    lon_min: -179.5
+    lon_max: 179.5
+    lat_min: -77.5
+    lat_max: 89.5
+    expected_locations: 41019
+    
+  # Biomass value ranges (mg C/m³)
+  biomass_ranges:
+    Flagellates: [0, 10]
+    Ciliates: [0, 5]
+    Larvaceans: [0, 3]
+    OmniCopepods: [0, 15]
+    CarnCopepods: [0, 8]
+    Euphausiids: [0, 12]
+    Chaetognaths: [0, 4]
+    Salps: [0, 6]
+    Jellyfish: [0, 2]
+    Fish_Small: [0, 30]
+    Fish_Med: [0, 40]
+    Fish_Large: [0, 50]
+    
+  # Temporal validation
+  temporal:
+    historical_years: [1850, 2014]
+    future_years: [2015, 2300]
+    picontrol_years: [1601, 2100]
+
+# ==============================================================================
+# LOGGING CONFIGURATION
+# ==============================================================================
+logging:
+  level: "INFO"  # DEBUG, INFO, WARN, ERROR
+  console_output: true
+  file_output: true
+  max_log_size_mb: 100
+  rotate_logs: true
+  
+  # Log file naming
+  filename_pattern: "{script_name}_{timestamp}.log"
+  summary_pattern: "processing_summary_{timestamp}.txt"
+
+# ==============================================================================
+# PLOTTING PARAMETERS
+# ==============================================================================
+plotting:
+  # Figure dimensions
+  dimensions:
+    width: 12
+    height: 8
+    dpi: 300
+    
+  # Time series plotting
+  time_series:
+    baseline_period: [1995, 2014]  # For percentage change calculations
+    smoothing: false
+    confidence_intervals: false
+    
+  # Color schemes
+  colors:
+    models:
+      "cesm2-waccm": "#E31A1C"
+      "ipsl-cm6a-lr": "#1F78B4" 
+      "ukesm1-0-ll": "#33A02C"
+    scenarios:
+      "historical": "#000000"
+      "picontrol": "#999999"
+      "ssp126": "#3366CC"
+      "ssp534-over": "#FF9900"
+      "ssp585": "#DC3912"
+
+# ==============================================================================
+# PROCESSING CONTROLS
+# ==============================================================================
+processing:
+  # Parallel processing
+  parallel:
+    enabled: false  # Enable for future enhancement
+    cores: 2        # Number of cores to use
+    
+  # Progress reporting
+  progress:
+    enabled: true
+    update_frequency: 1  # Report every N files
+    
+  # Error handling
+  error_handling:
+    continue_on_error: false
+    max_retries: 3
+    retry_delay_seconds: 5
+    
+  # Intermediate file cleanup
+  cleanup:
+    remove_intermediates: false
+    keep_last_n_versions: 3
+
+# ==============================================================================
+# OUTPUT FORMATS
+# ==============================================================================
+output:
+  # Data formats
+  data:
+    primary_format: "rds"
+    backup_format: "csv"  # For human-readable backup
+    compression: true
+    
+  # Figure formats
+  figures:
+    primary_format: "png"
+    secondary_format: "pdf" 
+    save_both: false
+    
+  # Report formats
+  reports:
+    summary_format: "txt"
+    detailed_format: "html"  # For future R Markdown reports
+
+# ==============================================================================
+# SYSTEM REQUIREMENTS
+# ==============================================================================
+system:
+  # Minimum requirements
+  min_memory_gb: 4
+  min_disk_space_gb: 10
+  
+  # Recommended requirements  
+  recommended_memory_gb: 16
+  recommended_disk_space_gb: 50
+  
+  # R package requirements
+  required_packages:
+    - "tidyverse"
+    - "raster" 
+    - "ncdf4"
+    - "viridis"
+    - "scales"
+    - "maps"
+    - "config"
+    - "logger"
+    
+  # Optional enhancement packages
+  optional_packages:
+    - "plotly"      # Interactive visualizations
+    - "testthat"    # Testing framework
+    - "parallel"    # Parallel processing
+    - "data.table"  # Memory efficiency
+    - "rmarkdown"   # Automated reporting
+
+# ==============================================================================
+# DEVELOPMENT SETTINGS
+# ==============================================================================
+development:
+  # Testing
+  test_mode: false
+  test_subset_files: 3
+  
+  # Debugging
+  debug_mode: false
+  verbose_output: true
+  
+  # Version control
+  track_versions: true
+  backup_configs: true
