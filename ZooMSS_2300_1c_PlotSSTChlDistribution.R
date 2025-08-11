@@ -16,7 +16,7 @@ process_rds_files <- function(folder_path, chunk_size = 500000) {
   all_files <- list.files(path = folder_path, pattern = "\\.rds$", full.names = TRUE)
 
   # Create output directory
-  dir.create("processed_data", showWarnings = FALSE)
+  dir.create("Output/processed_data", showWarnings = FALSE)
 
   # Initialize a data frame to track models and experiments found in each file
   file_contents <- data.frame(
@@ -95,7 +95,7 @@ process_rds_files <- function(folder_path, chunk_size = 500000) {
           subset_data <- current_dt[Model == model & Experiment == experiment]
 
           # Create a filename for this combination
-          output_file <- file.path("processed_data",
+          output_file <- file.path("Output/processed_data",
                                    sprintf("%s_%s.rds", model, experiment))
 
           # Check if file already exists
@@ -158,7 +158,7 @@ process_rds_files <- function(folder_path, chunk_size = 500000) {
 # Function to combine data and create visualizations following Jason's approach
 create_visualizations <- function() {
   # Get all processed files
-  processed_files <- list.files("processed_data", pattern = "\\.rds$", full.names = TRUE)
+  processed_files <- list.files("Output/processed_data", pattern = "\\.rds$", full.names = TRUE)
 
   if (length(processed_files) == 0) {
     cat("No processed data files found.\n")
