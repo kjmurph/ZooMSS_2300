@@ -258,27 +258,67 @@ p2c <- aggregate_1990s_baseline %>%
     Group == "TCB_Change_1990s" ~ "Total Consumer Biomass"
   )) %>%
   ggplot(aes(x = Year, y = Change, color = scenario)) +
-  geom_line(linewidth = 1.0) +
-  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.7) +
-  geom_vline(xintercept = c(1990, 1999), linetype = "dotted", alpha = 0.5, color = "darkblue") +
+  geom_line(linewidth = 1.2, alpha = 0.9) +
+  geom_hline(yintercept = 0, linetype = "solid", alpha = 0.8, color = "gray30", linewidth = 0.5) +
+  geom_vline(xintercept = c(1990, 1999), linetype = "dotted", alpha = 0.6, color = "steelblue") +
   annotate("rect", xmin = 1990, xmax = 1999, ymin = -Inf, ymax = Inf, 
-           alpha = 0.1, fill = "blue") +
-  annotate("text", x = 1994.5, y = Inf, label = "Baseline\n1990-1999", 
-           vjust = 1.1, hjust = 0.5, size = 3, color = "darkblue") +
-  facet_wrap(~Group, scales = "free_y") +
-  scale_color_manual(values = scenario_colors) +
-  labs(
-    title = "Marine Biomass Changes Through 2100: IPSL-CM6A-LR Model",
-    subtitle = "Percentage change from historical 1990-1999 baseline - IPSL model validation",
-    x = "Year",
-    y = "Change (%)",
-    color = "Scenario"
+           alpha = 0.15, fill = "steelblue") +
+  annotate("text", x = 1994.5, y = Inf, label = "Baseline\n(1990-1999)", 
+           vjust = 1.2, hjust = 0.5, size = 3.2, color = "steelblue", fontface = "italic") +
+  facet_wrap(~Group, scales = "free_y", ncol = 3) +
+  scale_color_manual(
+    values = c(
+      "historical" = "#2166ac",
+      "ssp126" = "#5aae61", 
+      "ssp585" = "#d73027",
+      "ssp534-over" = "#f46d43"
+    ),
+    labels = c(
+      "historical" = "Historical",
+      "ssp126" = "SSP1-2.6", 
+      "ssp585" = "SSP5-8.5",
+      "ssp534-over" = "SSP5-3.4-OS"
+    )
   ) +
-  theme_bw() +
+  scale_x_continuous(breaks = seq(1970, 2100, 20), expand = c(0.02, 0)) +
+  labs(
+    title = "Marine Consumer Biomass Projections Through 2100",
+    subtitle = "IPSL-CM6A-LR Model | Percentage change from 1990-1999 baseline",
+    x = "Year",
+    y = "Biomass change (%)",
+    color = "Climate scenario"
+  ) +
+  theme_classic() +
   theme(
+    # Panel and plot styling
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.8),
+    panel.grid.major = element_line(color = "gray90", linewidth = 0.3),
+    panel.grid.minor = element_blank(),
+    
+    # Strip (facet) styling
+    strip.background = element_rect(fill = "gray95", color = "black", linewidth = 0.5),
+    strip.text = element_text(size = 11, face = "bold", color = "black"),
+    
+    # Text styling
+    plot.title = element_text(size = 16, hjust = 0.5, face = "bold", 
+                              margin = margin(b = 8)),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "gray30",
+                                 margin = margin(b = 15)),
+    axis.title = element_text(size = 12, face = "bold"),
+    axis.text = element_text(size = 10, color = "black"),
+    
+    # Legend styling
     legend.position = "bottom",
-    plot.title = element_text(size = 14, hjust = 0.5),
-    plot.subtitle = element_text(size = 11, hjust = 0.5)
+    legend.title = element_text(size = 11, face = "bold"),
+    legend.text = element_text(size = 10),
+    legend.key.width = unit(1.5, "cm"),
+    legend.key.height = unit(0.4, "cm"),
+    legend.margin = margin(t = 10),
+    
+    # Plot margins
+    plot.margin = margin(15, 20, 15, 15)
   )
 
 ggsave(paste0(figure_dir, "biomass_percentage_change_through_2100_IPSL_only.png"), 

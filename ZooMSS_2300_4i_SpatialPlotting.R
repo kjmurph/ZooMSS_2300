@@ -235,7 +235,7 @@ create_spatial_plot <- function(data, variable, title, subtitle = "",
                                color_scale = "RdYlBu", symmetric = FALSE,
                                limits = NULL) {
   
-  # Get world map
+  # Get world map with enhanced coastline
   world_map <- map_data("world")
   
   # Keep all data points for complete spatial coverage
@@ -244,27 +244,54 @@ create_spatial_plot <- function(data, variable, title, subtitle = "",
   cat("Plotting", nrow(data), "grid cells for", variable, "\n")
   cat("Data range:", min(data[[variable]], na.rm=TRUE), "to", max(data[[variable]], na.rm=TRUE), "\n")
   
-  # Create base plot
+  # Create base plot with enhanced Tittensor-style theme
   p <- ggplot() +
     # Add data tiles (fill grid cells with color scale)
     geom_tile(data = data, aes(x = Lon, y = Lat, fill = !!sym(variable))) +
-    # Add world map on top
+    # Add enhanced world map on top
     geom_polygon(data = world_map, aes(x = long, y = lat, group = group), 
-                 fill = NA, color = "black", linewidth = 0.2) +
-    # Set coordinate system
-    coord_fixed(ratio = 1, xlim = c(-180, 180), ylim = c(-90, 90)) +
-    # Themes and labels
-    labs(title = title, subtitle = subtitle, x = "Longitude", y = "Latitude") +
-    theme_minimal() +
+                 fill = "gray20", color = "white", linewidth = 0.15, alpha = 0.8) +
+    # Use Robinson-style coordinate system with appropriate limits
+    coord_fixed(ratio = 1, xlim = c(-180, 180), ylim = c(-85, 85)) +
+    # Enhanced themes and labels
+    labs(
+      title = title, 
+      subtitle = subtitle, 
+      x = "", 
+      y = "",
+      fill = if(variable %in% c("TCB_Change", "Zoop_Change", "Fish_Change")) "Change (%)" else "Biomass"
+    ) +
+    theme_void() +
     theme(
-      panel.background = element_rect(fill = "white"),
-      plot.title = element_text(size = 12, hjust = 0.5),
-      plot.subtitle = element_text(size = 10, hjust = 0.5),
-      axis.text = element_text(size = 8),
-      legend.position = "bottom"
+      # Panel and plot styling
+      panel.background = element_rect(fill = "white", color = NA),
+      plot.background = element_rect(fill = "white", color = NA),
+      
+      # Text styling following Tittensor et al. conventions
+      plot.title = element_text(size = 14, hjust = 0.5, face = "bold", 
+                               margin = margin(b = 5)),
+      plot.subtitle = element_text(size = 11, hjust = 0.5, color = "gray30",
+                                  margin = margin(b = 15)),
+      
+      # Enhanced legend styling
+      legend.position = "bottom",
+      legend.title = element_text(size = 11, face = "bold"),
+      legend.text = element_text(size = 9),
+      legend.key.width = unit(2.5, "cm"),
+      legend.key.height = unit(0.5, "cm"),
+      legend.margin = margin(t = 15),
+      legend.box.margin = margin(t = 10),
+      
+      # Plot margins
+      plot.margin = margin(10, 15, 10, 15),
+      
+      # Remove axis elements for cleaner map appearance
+      axis.text = element_blank(),
+      axis.ticks = element_blank(),
+      axis.line = element_blank()
     )
   
-  # Apply color scale
+  # Apply enhanced color scales following Tittensor et al. conventions
   if (symmetric && is.null(limits)) {
     # For percentage change variables, use ±100% limits (following archived project approach)
     if (variable %in% c("TCB_Change", "Zoop_Change", "Fish_Change")) {
@@ -276,16 +303,62 @@ create_spatial_plot <- function(data, variable, title, subtitle = "",
   }
   
   if (color_scale == "RdYlBu") {
-    p <- p + scale_fill_distiller(palette = "RdYlBu", direction = 1, 
-                                  limits = limits, na.value = "gray50", 
-                                  oob = scales::squish)
+    p <- p + scale_fill_distiller(
+      palette = "RdYlBu", 
+      direction = 1, 
+      limits = limits, 
+      na.value = "gray90",
+      oob = scales::squish,
+      guide = guide_colorbar(
+        title.position = "top",
+        title.hjust = 0.5,
+        label.position = "bottom"
+      )
+    )
   } else if (color_scale == "viridis") {
-    p <- p + scale_fill_viridis_c(limits = limits, na.value = "gray50",
-                                  oob = scales::squish)
+    p <- p + scale_fill_viridis_c(
+      limits = limits, 
+      na.value = "gray90",
+      oob = scales::squish,
+      option = "plasma",
+      guide = guide_colorbar(
+        title.position = "top",
+        title.hjust = 0.5,
+        label.position = "bottom"
+      )
+    )
   } else if (color_scale == "RdBu") {
-    p <- p + scale_fill_gradient2(low = "red", mid = "white", high = "blue", 
-                                  midpoint = 0, limits = limits, na.value = "gray50",
-                                  oob = scales::squish)
+    # Blue for increases, Red for decreases (swapped from default)
+    p <- p + scale_fill_gradient2(
+      low = "#b2182b",     # Red for decreases
+      mid = "white", 
+      high = "#2166ac",    # Blue for increases
+      midpoint = 0, 
+      limits = limits, 
+      na.value = "gray90",
+      oob = scales::squish,
+      guide = guide_colorbar(
+        title.position = "top",
+        title.hjust = 0.5,
+        label.position = "bottom"
+      )
+    )
+  } else if (color_scale == "colorblind") {
+    # Colorblind-friendly palette: Orange for decreases, Blue for increases
+    p <- p + scale_fill_gradient2(
+      low = "#e66101",     # Orange for decreases (colorblind-friendly)
+      mid = "white", 
+      high = "#5e3c99",    # Purple-blue for increases (colorblind-friendly)
+      midpoint = 0, 
+      limits = limits, 
+      na.value = "gray90",
+      oob = scales::squish,
+      guide = guide_colorbar(
+        title.position = "top",
+        title.hjust = 0.5,
+        label.position = "bottom"
+      )
+    )
   }
   
   return(p)
@@ -308,16 +381,27 @@ p1 <- historical_spatial %>%
 ggsave(paste0(figure_dir, "historical_total_biomass_spatial.png"), 
        p1, width = 12, height = 8, dpi = 300)
 
-# Plot 2: Recent Changes (2090-2099 vs 1990-1999) 
+# Plot 2: Recent Changes (2090-2099 vs 1990-1999) - IPSL Model Only
 p2 <- recent_changes %>%
-  filter(scenario == "ssp585") %>%
+  filter(scenario == "ssp585" & model == "ipsl-cm6a-lr") %>%
   create_spatial_plot("TCB_Change",
                      "Total Consumer Biomass Change by 2090s (SSP5-8.5)",
-                     "Percentage change from 1990-1999 baseline",
+                     "IPSL-CM6A-LR Model | Percentage change from 1990-1999 baseline",
                      color_scale = "RdBu", symmetric = TRUE)
 
-ggsave(paste0(figure_dir, "recent_biomass_change_ssp585_spatial.png"),
+ggsave(paste0(figure_dir, "recent_biomass_change_IPSL_ssp585_spatial.png"),
        p2, width = 12, height = 8, dpi = 300)
+
+# Plot 2b: Colorblind-friendly version of recent changes - IPSL Model Only
+p2b <- recent_changes %>%
+  filter(scenario == "ssp585" & model == "ipsl-cm6a-lr") %>%
+  create_spatial_plot("TCB_Change",
+                     "Total Consumer Biomass Change by 2090s (SSP5-8.5)",
+                     "IPSL-CM6A-LR Model | Percentage change from 1990-1999 baseline | Colorblind-friendly",
+                     color_scale = "colorblind", symmetric = TRUE)
+
+ggsave(paste0(figure_dir, "recent_biomass_change_IPSL_ssp585_colorblind_spatial.png"),
+       p2b, width = 12, height = 8, dpi = 300)
 
 # Plot 3: Future Changes (2290-2299 vs 1990-1999)
 p3 <- future_changes %>%
@@ -329,6 +413,17 @@ p3 <- future_changes %>%
 
 ggsave(paste0(figure_dir, "future_biomass_change_ssp585_spatial.png"),
        p3, width = 12, height = 8, dpi = 300)
+
+# Plot 3b: Colorblind-friendly version of future changes
+p3b <- future_changes %>%
+  filter(scenario == "ssp585") %>%
+  create_spatial_plot("TCB_Change",
+                     "Total Consumer Biomass Change by 2290s (SSP5-8.5)", 
+                     "Percentage change from 1990-1999 baseline | Colorblind-friendly",
+                     color_scale = "colorblind", symmetric = TRUE)
+
+ggsave(paste0(figure_dir, "future_biomass_change_ssp585_colorblind_spatial.png"),
+       p3b, width = 12, height = 8, dpi = 300)
 
 # Plot 4: Multi-model comparison for SSP5-8.5 recent changes
 if (length(unique(recent_changes$model)) > 1) {
