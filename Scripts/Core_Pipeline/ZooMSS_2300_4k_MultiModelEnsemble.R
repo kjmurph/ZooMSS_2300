@@ -479,7 +479,12 @@ create_custom_ensemble_comparison <- function(ssp126_data, ssp585_data, period_n
     scale_fill_viridis_c(
       option = "inferno", na.value = "grey90",
       name = "CV",
-      trans = "sqrt"
+      trans = "sqrt",
+      guide = guide_colorbar(
+        title.position = "top",
+        title.hjust = 0.5,
+        label.position = "bottom"
+      )
     ) +
     coord_fixed(ratio = 1, xlim = c(-180, 180), ylim = c(-85, 85)) +
     theme_void() +
@@ -527,7 +532,12 @@ create_custom_ensemble_comparison <- function(ssp126_data, ssp585_data, period_n
     scale_fill_viridis_c(
       option = "inferno", na.value = "grey90",
       name = "CV",
-      trans = "sqrt"
+      trans = "sqrt",
+      guide = guide_colorbar(
+        title.position = "top",
+        title.hjust = 0.5,
+        label.position = "bottom"
+      )
     ) +
     coord_fixed(ratio = 1, xlim = c(-180, 180), ylim = c(-85, 85)) +
     theme_void() +
