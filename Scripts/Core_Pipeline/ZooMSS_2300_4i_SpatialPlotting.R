@@ -12,6 +12,7 @@ library(scales)
 library(maps)
 library(RColorBrewer)
 library(patchwork)
+library(sf)
 
 # Set directories
 figure_dir <- "Figures/Spatial_Biomass/"
@@ -33,15 +34,27 @@ cat("Date:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
 biomass_files <- list.files(input_dir, pattern = "Biomass_ClimateChange.*\\.rds$", full.names = TRUE)
 cat("Found", length(biomass_files), "biomass files for spatial analysis\n")
 
-# Load a subset for spatial analysis (to manage memory)
+# Load comprehensive set for complete multi-model spatial analysis
 selected_files <- c(
+  # Historical scenarios (needed for baseline)
   grep("cesm2-waccm_historical", biomass_files, value = TRUE)[1],
-  grep("cesm2-waccm_ssp126", biomass_files, value = TRUE)[1], 
-  grep("cesm2-waccm_ssp585", biomass_files, value = TRUE)[1],
   grep("ipsl-cm6a-lr_historical", biomass_files, value = TRUE)[1],
-  grep("ipsl-cm6a-lr_ssp585", biomass_files, value = TRUE)[1],
   grep("ukesm1-0-ll_historical", biomass_files, value = TRUE)[1],
-  grep("ukesm1-0-ll_ssp585", biomass_files, value = TRUE)[1]
+  
+  # SSP1-2.6 scenarios (all models)
+  grep("cesm2-waccm_ssp126", biomass_files, value = TRUE)[1],
+  grep("ipsl-cm6a-lr_ssp126", biomass_files, value = TRUE)[1],
+  grep("ukesm1-0-ll_ssp126", biomass_files, value = TRUE)[1],
+  
+  # SSP5-8.5 scenarios (all models) 
+  grep("cesm2-waccm_ssp585", biomass_files, value = TRUE)[1],
+  grep("ipsl-cm6a-lr_ssp585", biomass_files, value = TRUE)[1],
+  grep("ukesm1-0-ll_ssp585", biomass_files, value = TRUE)[1],
+  
+  # piControl scenarios (all models)
+  grep("cesm2-waccm_picontrol", biomass_files, value = TRUE)[1],
+  grep("ipsl-cm6a-lr_picontrol", biomass_files, value = TRUE)[1],
+  grep("ukesm1-0-ll_picontrol", biomass_files, value = TRUE)[1]
 )
 
 # Remove any NA values
@@ -99,13 +112,23 @@ load_spatial_biomass <- function(file_path, time_slice = NULL) {
   # Filter to specific time slice if requested
   if (!is.null(time_slice)) {
     if (time_slice == "recent") {
-      # Use 2090-2099 for recent projections
-      data <- data %>% filter(Year >= 2090 & Year <= 2099)
+      # Use 2090-2099 for recent projections (SSP scenarios)
+      # For piControl, use equivalent period (2090-2099 if available, otherwise 2090-2100)
+      if (scenario == "picontrol") {
+        data <- data %>% filter(Year >= 2090 & Year <= 2100)
+      } else {
+        data <- data %>% filter(Year >= 2090 & Year <= 2099)
+      }
     } else if (time_slice == "future") {
-      # Use 2290-2299 for far future
-      data <- data %>% filter(Year >= 2290 & Year <= 2299)
+      # Use 2290-2299 for far future (SSP scenarios only)
+      # For piControl, use later period (2090-2100 since it doesn't extend to 2290s)
+      if (scenario == "picontrol") {
+        data <- data %>% filter(Year >= 2090 & Year <= 2100)
+      } else {
+        data <- data %>% filter(Year >= 2290 & Year <= 2299)
+      }
     } else if (time_slice == "historical") {
-      # Use 1990-1999 for historical reference
+      # Use 1990-1999 for historical reference for all scenarios
       data <- data %>% filter(Year >= 1990 & Year <= 1999)
     }
   }
@@ -251,7 +274,7 @@ create_spatial_plot <- function(data, variable, title, subtitle = "",
     # Add enhanced world map on top
     geom_polygon(data = world_map, aes(x = long, y = lat, group = group), 
                  fill = "gray20", color = "white", linewidth = 0.15, alpha = 0.8) +
-    # Use Robinson-style coordinate system with appropriate limits
+    # Use standard coordinate system (Robinson projection causes sf errors)
     coord_fixed(ratio = 1, xlim = c(-180, 180), ylim = c(-85, 85)) +
     # Enhanced themes and labels
     labs(
@@ -425,6 +448,48 @@ p3b <- future_changes %>%
 ggsave(paste0(figure_dir, "future_biomass_change_ssp585_colorblind_spatial.png"),
        p3b, width = 12, height = 8, dpi = 300)
 
+# Plot 3c: Multi-model comparison for SSP5-8.5 future changes (2290-2299)
+if (length(unique(future_changes$model)) > 1) {
+  p3c <- future_changes %>%
+    filter(scenario == "ssp585") %>%
+    create_spatial_plot("TCB_Change",
+                       "TCB Change by 2290s: Multi-Model Comparison (SSP5-8.5)",
+                       "Percentage change from 1990-1999 baseline",
+                       color_scale = "RdBu", symmetric = TRUE) +
+    facet_wrap(~model, ncol = 2)
+  
+  ggsave(paste0(figure_dir, "future_biomass_change_multimodel_ssp585_spatial.png"),
+         p3c, width = 16, height = 12, dpi = 300)
+}
+
+# Plot 3d: Multi-model comparison for SSP1-2.6 future changes (2290-2299)
+if (length(unique(future_changes$model)) > 1) {
+  p3d <- future_changes %>%
+    filter(scenario == "ssp126") %>%
+    create_spatial_plot("TCB_Change",
+                       "TCB Change by 2290s: Multi-Model Comparison (SSP1-2.6)",
+                       "Percentage change from 1990-1999 baseline",
+                       color_scale = "RdBu", symmetric = TRUE) +
+    facet_wrap(~model, ncol = 2)
+  
+  ggsave(paste0(figure_dir, "future_biomass_change_multimodel_ssp126_spatial.png"),
+         p3d, width = 16, height = 12, dpi = 300)
+}
+
+# Plot 3e: Multi-model comparison for piControl future changes (if available)
+if (length(unique(future_changes$model)) > 1 && "picontrol" %in% future_changes$scenario) {
+  p3e <- future_changes %>%
+    filter(scenario == "picontrol") %>%
+    create_spatial_plot("TCB_Change",
+                       "TCB Change by 2090s: Multi-Model Comparison (piControl)",
+                       "Percentage change from 1990-1999 baseline",
+                       color_scale = "RdBu", symmetric = TRUE) +
+    facet_wrap(~model, ncol = 2)
+  
+  ggsave(paste0(figure_dir, "future_biomass_change_multimodel_picontrol_spatial.png"),
+         p3e, width = 16, height = 12, dpi = 300)
+}
+
 # Plot 4: Multi-model comparison for SSP5-8.5 recent changes
 if (length(unique(recent_changes$model)) > 1) {
   p4 <- recent_changes %>%
@@ -435,8 +500,36 @@ if (length(unique(recent_changes$model)) > 1) {
                        color_scale = "RdBu", symmetric = TRUE) +
     facet_wrap(~model, ncol = 2)
   
-  ggsave(paste0(figure_dir, "recent_biomass_change_multimodel_spatial.png"),
+  ggsave(paste0(figure_dir, "recent_biomass_change_multimodel_ssp585_spatial.png"),
          p4, width = 16, height = 12, dpi = 300)
+}
+
+# Plot 4b: Multi-model comparison for SSP1-2.6 recent changes
+if (length(unique(recent_changes$model)) > 1) {
+  p4b <- recent_changes %>%
+    filter(scenario == "ssp126") %>%
+    create_spatial_plot("TCB_Change",
+                       "TCB Change by 2090s: Multi-Model Comparison (SSP1-2.6)",
+                       "Percentage change from 1990-1999 baseline",
+                       color_scale = "RdBu", symmetric = TRUE) +
+    facet_wrap(~model, ncol = 2)
+  
+  ggsave(paste0(figure_dir, "recent_biomass_change_multimodel_ssp126_spatial.png"),
+         p4b, width = 16, height = 12, dpi = 300)
+}
+
+# Plot 4c: Multi-model comparison for piControl recent changes (if available)
+if (length(unique(recent_changes$model)) > 1 && "picontrol" %in% recent_changes$scenario) {
+  p4c <- recent_changes %>%
+    filter(scenario == "picontrol") %>%
+    create_spatial_plot("TCB_Change",
+                       "TCB Change by 2090s: Multi-Model Comparison (piControl)",
+                       "Percentage change from 1990-1999 baseline",
+                       color_scale = "RdBu", symmetric = TRUE) +
+    facet_wrap(~model, ncol = 2)
+  
+  ggsave(paste0(figure_dir, "recent_biomass_change_multimodel_picontrol_spatial.png"),
+         p4c, width = 16, height = 12, dpi = 300)
 }
 
 # Plot 5: Zooplankton vs Fish changes comparison

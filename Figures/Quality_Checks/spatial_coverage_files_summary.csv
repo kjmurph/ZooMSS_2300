@@ -1,0 +1,4 @@
+file_index,model,scenario,total_rows,unique_locations,lon_min,lon_max,lat_min,lat_max,years
+1,cesm2-waccm,historical,6768135,41019,-179.5,179.5,-77.5,89.5,1850-2014
+2,cesm2-waccm,picontrol,20468481,41019,-179.5,179.5,-77.5,89.5,1601-2100
+3,cesm2-waccm,ssp126,11690415,41019,-179.5,179.5,-77.5,89.5,2015-2299
