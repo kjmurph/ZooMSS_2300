@@ -1,0 +1,56 @@
+2025-08-15 11:41:19.679816 - PHASE 1: Removing duplicate scripts from root directory
+2025-08-15 11:41:19.704053 -   ✓ Removed duplicate: ZooMSS_2300_4h_CorrectedAreaWeighting.R
+2025-08-15 11:41:19.706436 -   ✓ Removed duplicate: ZooMSS_2300_4i_SpatialPlotting.R
+2025-08-15 11:41:19.708757 -   ✓ Removed duplicate: ZooMSS_2300_4k_MultiModelEnsemble.R
+2025-08-15 11:41:19.712397 -   ✓ Removed duplicate: ZooMSS_2300_4l_SeparateBiomassPlots.R
+2025-08-15 11:41:19.715815 -   ✓ Removed duplicate: ZooMSS_2300_4m_MultiModelMeanBiomass.R
+2025-08-15 11:41:19.718569 -   ✓ Removed duplicate: ZooMSS_2300_MasterPipeline.R
+2025-08-15 11:41:19.720036 - 
+PHASE 2: Moving development scripts to Archive
+2025-08-15 11:41:19.732312 -   ✓ Removed duplicate (already in Archive): ZooMSS_2300_2c_STREAMLINED_EnviroMatrix.R
+2025-08-15 11:41:19.736188 -   ✓ Removed duplicate (already in Archive): ZooMSS_2300_4b_MemorySafeBiomassTimeseries.R
+2025-08-15 11:41:19.739581 -   ✓ Removed duplicate (already in Archive): ZooMSS_2300_4c_BiomassTimeseriesPlots.R
+2025-08-15 11:41:19.744548 -   ✓ Removed duplicate (already in Archive): ZooMSS_2300_4d_EnhancedBiomassAnalysis.R
+2025-08-15 11:41:19.749262 -   ✓ Removed duplicate (already in Archive): ZooMSS_2300_4e_SpatialChangeAnalysis.R
+2025-08-15 11:41:19.754925 -   ✓ Removed duplicate (already in Archive): ZooMSS_2300_4f_SimplifiedSpatialAnalysis.R
+2025-08-15 11:41:19.758614 -   ✓ Removed duplicate (already in Archive): ZooMSS_2300_4g_EnhancedPlotting.R
+2025-08-15 11:41:19.762814 -   ✓ Removed duplicate (already in Archive): ZooMSS_2300_4h_IPSL_Individual_Plots.R
+2025-08-15 11:41:19.76612 -   ✓ Removed duplicate (already in Archive): ZooMSS_2300_4j_SeparateBiomassPlots.R
+2025-08-15 11:41:19.768991 - 
+PHASE 3: Moving temporary/diagnostic scripts to Archive
+2025-08-15 11:41:19.788552 -   ✓ Removed duplicate (already in Archive): analyze_redundancy.R
+2025-08-15 11:41:19.79199 -   ✓ Removed duplicate (already in Archive): check_biomass_data.R
+2025-08-15 11:41:19.795948 -   ✓ Removed duplicate (already in Archive): check_data_structure.R
+2025-08-15 11:41:19.799475 -   ✓ Removed duplicate (already in Archive): create_biomass_plots_final.R
+2025-08-15 11:41:19.802364 -   ✓ Removed duplicate (already in Archive): diagnose_extreme_changes.R
+2025-08-15 11:41:19.805274 -   ✓ Removed duplicate (already in Archive): extreme_values_solution_summary.R
+2025-08-15 11:41:19.808126 -   ✓ Removed duplicate (already in Archive): implement_reorganization.R
+2025-08-15 11:41:19.812188 -   ✓ Removed duplicate (already in Archive): multimodel_analysis_summary.R
+2025-08-15 11:41:19.815838 -   ✓ Removed duplicate (already in Archive): quick_structure_check.R
+2025-08-15 11:41:19.819184 -   ✓ Removed duplicate (already in Archive): repository_reorganization_plan.R
+2025-08-15 11:41:19.822418 -   ✓ Removed duplicate (already in Archive): separate_plots_summary.R
+2025-08-15 11:41:19.825103 -   ✓ Removed duplicate (already in Archive): spatial_change_diagnostic.R
+2025-08-15 11:41:19.828503 -   ✓ Removed duplicate (already in Archive): spatial_diagnostic.R
+2025-08-15 11:41:19.832153 -   ✓ Removed duplicate (already in Archive): spatial_plot_test.R
+2025-08-15 11:41:19.835928 -   ✓ Removed duplicate (already in Archive): test_enhanced_theme.R
+2025-08-15 11:41:19.839353 -   ✓ Removed duplicate (already in Archive): test_extreme_values_approach.R
+2025-08-15 11:41:19.857468 -   ✓ Moved to Archive: update_cv_legends.R
+2025-08-15 11:41:19.860752 -   ✓ Removed duplicate (already in Archive): validate_area_weighting.R
+2025-08-15 11:41:19.863922 -   ✓ Removed duplicate (already in Archive): validate_spatial_coverage.R
+2025-08-15 11:41:19.867644 -   ✓ Removed duplicate (already in Archive): validate_spatial_coverage_simple.R
+2025-08-15 11:41:19.87072 -   ✓ Removed duplicate (already in Archive): verify_grid_coverage.R
+2025-08-15 11:41:19.8731 -   ✓ Removed duplicate (already in Archive): verify_reorganization.R
+2025-08-15 11:41:19.876656 -   ✓ Removed duplicate (already in Archive): verify_reorganized_outputs.R
+2025-08-15 11:41:19.880574 -   ✓ Removed duplicate (already in Archive): verify_tile_format.R
+2025-08-15 11:41:19.883883 - 
+PHASE 4: Moving utility scripts to Utilities
+2025-08-15 11:41:19.88698 -   ✓ Removed duplicate (already in Utilities): setup_packages.R
+2025-08-15 11:41:19.889134 - 
+PHASE 5: Verification and summary
+2025-08-15 11:41:19.891153 - Remaining R scripts in root: 2
+2025-08-15 11:41:19.892497 - WARNING: Unexpected R scripts still in root:
+2025-08-15 11:41:19.895787 -   - cleanup_analysis.R
+2025-08-15 11:41:19.896855 -   - complete_cleanup.R
+2025-08-15 11:41:19.89983 - Scripts/Core_Pipeline: 16 scripts
+2025-08-15 11:41:19.900986 - Scripts/Archive: 39 scripts
+2025-08-15 11:41:19.901966 - Scripts/Utilities: 4 scripts
