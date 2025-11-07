@@ -2,7 +2,7 @@
 # CORRECTED AREA-WEIGHTED BIOMASS ANALYSIS
 # ==============================================================================
 # Purpose: Fixed area weighting that maintains spatial consistency
-# Version: 1.1.0 - Enhanced with logging and configuration
+# Version: 1.2.0 - Updated for QAQC run
 # ==============================================================================
 
 library(tidyverse)
@@ -11,46 +11,36 @@ library(patchwork)
 library(scales)
 library(viridis)
 library(RColorBrewer)
-library(config)
-library(logger)
 
-# Load configuration and setup logging
-config <- config::get()
-source("R/logging_utils.R")
-
-# Setup logging for this script
-log_file <- setup_logging(
-  log_dir = config$paths$logs_dir,
-  log_level = config$logging$level,
-  script_name = "CorrectedAreaWeighting"
-)
-
-# Set directories from config
-output_dir <- config$paths$biomass_projections_dir
-figure_dir <- config$paths$enhanced_figures_dir
+# Set directories for QAQC run
+base_dir <- getwd()
+output_dir <- file.path(base_dir, "Output", "Step3d_ZooMSS_Biomass_Projections_2300")
+figure_dir <- file.path(base_dir, "Figures", "QAQC_Spatial_Biomass_2300")
 
 # Create figures directory
 if (!dir.exists(figure_dir)) {
   dir.create(figure_dir, recursive = TRUE)
-  log_info("Created figure directory: {figure_dir}")
+  cat("Created figure directory:", figure_dir, "\n")
 }
 
-log_info("=== CORRECTED AREA-WEIGHTED BIOMASS ANALYSIS ===")
+cat("=== CORRECTED AREA-WEIGHTED BIOMASS ANALYSIS ===\n")
+cat("Date:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 analysis_start_time <- Sys.time()
 
 # Set random seed for reproducibility
-set.seed(config$analysis$random_seed)
-log_info("Random seed set to: {config$analysis$random_seed}")
+set.seed(42)
+cat("Random seed set to: 42\n")
 
 # ==============================================================================
 # STEP 1: CREATE CONSISTENT OCEAN MASK AND AREA WEIGHTING
 # ==============================================================================
 
-step1_start <- log_checkpoint("Creating consistent ocean mask and area weighting")
+cat("\nSTEP 1: Creating consistent ocean mask and area weighting\n")
 
 # First, determine the actual grid structure from one file
-sample_file <- list.files(output_dir, pattern = "*.rds", full.names = TRUE)[1]
-log_file_processing(sample_file, processing_stage = "Loading reference grid")
+biomass_files <- list.files(output_dir, pattern = "ZooMSS_Biomass_2300_.*\\.rds$", full.names = TRUE)
+sample_file <- biomass_files[1]
+cat("Loading reference grid from:", basename(sample_file), "\n")
 
 sample_data <- readRDS(sample_file)
 
@@ -60,16 +50,9 @@ ocean_grid <- sample_data %>%
   distinct() %>%
   arrange(Lat, Lon)
 
-log_info("Ocean grid points found: {nrow(ocean_grid)}")
-log_info("Latitude range: {paste(range(ocean_grid$Lat), collapse = ' to ')}")
-log_info("Longitude range: {paste(range(ocean_grid$Lon), collapse = ' to ')}")
-
-# Validate spatial extent
-spatial_valid <- log_validation(
-  "Spatial extent validation",
-  abs(min(ocean_grid$Lon) + 179.5) < 0.1 && abs(max(ocean_grid$Lon) - 179.5) < 0.1,
-  "Longitude range matches expected global coverage"
-)
+cat("Ocean grid points found:", nrow(ocean_grid), "\n")
+cat("Latitude range:", paste(range(ocean_grid$Lat), collapse = " to "), "\n")
+cat("Longitude range:", paste(range(ocean_grid$Lon), collapse = " to "), "\n")
 
 # Calculate areas for each grid cell using proper method
 # For 1-degree grid cells, area varies with latitude
@@ -113,9 +96,9 @@ zooplankton_species <- c("Flagellates", "Ciliates", "Larvaceans", "OmniCopepods"
 fish_species <- c("Fish_Small", "Fish_Med", "Fish_Large")
 all_species <- c(zooplankton_species, fish_species)
 
-# Get all biomass files
-biomass_files <- list.files(output_dir, pattern = "*.rds", full.names = TRUE)
-cat("STEP 2: Found", length(biomass_files), "biomass projection files\n")
+# Get all biomass files from QAQC run
+biomass_files <- list.files(output_dir, pattern = "ZooMSS_Biomass_2300_.*\\.rds$", full.names = TRUE)
+cat("\nSTEP 2: Found", length(biomass_files), "biomass projection files\n")
 
 # ==============================================================================
 # STEP 3: CORRECTED PROCESSING FUNCTION
@@ -139,8 +122,9 @@ process_biomass_corrected <- function(filepath, spatial_sample_fraction = 0.1) {
     }
     
     # Extract metadata from filename
-    model <- str_extract(filename, "(?<=withZooMSS_)[^_]+")
-    scenario <- str_extract(filename, "(?<=_)[^_]+(?=_Control)")
+    # Format: ZooMSS_Biomass_2300_MODEL_SCENARIO.rds
+    model <- str_extract(filename, "(?<=ZooMSS_Biomass_2300_)[^_]+")
+    scenario <- str_extract(filename, "(?<=_)[^_]+(?=\\.rds)")
     
     # Join with ocean grid areas (this maintains consistent area weighting)
     data_with_area <- data %>%
@@ -151,7 +135,7 @@ process_biomass_corrected <- function(filepath, spatial_sample_fraction = 0.1) {
     
     # Calculate area-weighted annual means using consistent methodology
     annual_means <- data_with_area %>%
-      group_by(Year) %>%
+      group_by(Date) %>%
       summarise(
         # Proper area-weighted means: sum(biomass * area) / sum(area)
         across(all_of(all_species), 
@@ -187,7 +171,7 @@ process_biomass_corrected <- function(filepath, spatial_sample_fraction = 0.1) {
       mutate(species = str_remove(species, "_weighted"))
     
     cat("  Extracted", nrow(annual_means), "time series points\n")
-    cat("  Year range:", min(annual_means$Year), "to", max(annual_means$Year), "\n")
+    cat("  Date range:", min(annual_means$Date), "to", max(annual_means$Date), "\n")
     cat("  Effective area:", round(annual_means$effective_area_km2[1]/1e6, 1), "million km²\n")
     cat("  Reference ocean area:", round(annual_means$total_ocean_area_km2[1]/1e6, 1), "million km²\n")
     
@@ -217,8 +201,8 @@ file_info <- data.frame(
 ) %>%
   arrange(size_mb) %>%
   mutate(
-    model = str_extract(filename, "(?<=withZooMSS_)[^_]+"),
-    scenario = str_extract(filename, "(?<=_)[^_]+(?=_Control)"),
+    model = str_extract(filename, "(?<=ZooMSS_Biomass_2300_)[^_]+"),
+    scenario = str_extract(filename, "(?<=_)[^_]+(?=\\.rds)"),
     size_category = case_when(
       size_mb < 2000 ~ "small",
       size_mb < 4000 ~ "medium", 
@@ -256,7 +240,7 @@ for(i in 1:nrow(file_info)) {
   if(i %% 3 == 0) {
     if(length(all_corrected_timeseries) > 0) {
       intermediate_data <- bind_rows(all_corrected_timeseries)
-      saveRDS(intermediate_data, paste0("Output/intermediate_corrected_timeseries_", i, "_files.rds"))
+      saveRDS(intermediate_data, file.path(base_dir, "Output", paste0("QAQC_intermediate_corrected_timeseries_", i, "_files.rds")))
       cat("  Intermediate results saved\n")
     }
   }
@@ -267,7 +251,7 @@ for(i in 1:nrow(file_info)) {
 # Combine all results
 if(length(all_corrected_timeseries) > 0) {
   combined_corrected_timeseries <- bind_rows(all_corrected_timeseries)
-  saveRDS(combined_corrected_timeseries, "Output/combined_corrected_biomass_timeseries.rds")
+  saveRDS(combined_corrected_timeseries, file.path(base_dir, "Output", "QAQC_combined_corrected_biomass_timeseries.rds"))
   cat("\nCombined corrected time series saved\n")
   cat("Total time series points:", nrow(combined_corrected_timeseries), "\n")
 } else {
@@ -284,7 +268,7 @@ cat("\nSTEP 5: Validation of corrected area weighting...\n")
 area_check <- combined_corrected_timeseries %>%
   group_by(model, scenario) %>%
   summarise(
-    n_years = n_distinct(Year),
+    n_years = n_distinct(Date),
     avg_effective_area = mean(effective_area_km2, na.rm = TRUE) / 1e6,
     reference_area = first(total_ocean_area_km2) / 1e6,
     area_fraction = avg_effective_area / (reference_area),
@@ -304,6 +288,6 @@ cat("- Proper area weighting based on latitude\n")
 cat("- Area calculations independent of spatial sampling\n")
 
 # Save validation results
-write_csv(area_check, paste0("Output/area_weighting_validation.csv"))
+write_csv(area_check, file.path(figure_dir, "QAQC_area_weighting_validation.csv"))
 
 cat("\n=== CORRECTED AREA WEIGHTING COMPLETE ===\n")

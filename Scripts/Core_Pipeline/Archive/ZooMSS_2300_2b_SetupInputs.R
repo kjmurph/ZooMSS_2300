@@ -4,8 +4,8 @@ library(tidyverse)
 library(lubridate)
 
 # Set directory paths
-base_dir <- "~/R Projects/ZooMSS_2300/Input/"
-out_dir <- "~/R Projects/ZooMSS_2300/Input/2300_processed/"
+base_dir <- "Input/"  # Base input directory
+out_dir <- "Input/2300_processed/"  # Output for processed files
 
 # Updated model names to match actual file patterns
 ModelArray <- c("cesm2-waccm", "ipsl-cm6a-lr", "ukesm1-0-ll")
@@ -60,8 +60,8 @@ for (m in 1:length(ModelArray)) {
     cat("  Looking for chla files with pattern:", chla_pattern, "\n")
 
     # Search in the specific subdirectories for files matching the patterns
-    ftos <- list.files(paste0(base_dir, "tos/"), pattern = tos_pattern, full.names = TRUE)
-    fchl <- list.files(paste0(base_dir, "chl/"), pattern = chla_pattern, full.names = TRUE)
+    ftos <- list.files(paste0(base_dir, "raw/tos/"), pattern = tos_pattern, full.names = TRUE)
+    fchl <- list.files(paste0(base_dir, "converted/chl/"), pattern = chla_pattern, full.names = TRUE)
 
     cat("  tos files found:", length(ftos), "\n")
     if(length(ftos) == 0) {

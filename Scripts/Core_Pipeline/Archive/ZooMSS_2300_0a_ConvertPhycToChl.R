@@ -175,10 +175,10 @@ if(!are_units_consistent) {
 
 
 # Path to your folder with phyc files
-folder_path <- "C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/R Projects/ZooMSS_2300/Input/phyc"
+folder_path <- "Input/raw/phyc"
 
 # Define output folder for converted files
-output_folder <- "C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/R Projects/ZooMSS_2300/Input/chla"
+output_folder <- "Input/converted/chl"
 
 # Create output directory if it doesn't exist
 if (!dir.exists(output_folder)) {
@@ -406,7 +406,7 @@ library(ggplot2)
 library(stringr)
 
 # Path to your chlorophyll files
-chla_folder <- "C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/R Projects/ZooMSS_2300/Input/chl"
+chla_folder <- "Input/converted/chl"
 
 # Get list of all .nc files
 chla_files <- list.files(chla_folder, pattern = "*.nc$", full.names = TRUE)

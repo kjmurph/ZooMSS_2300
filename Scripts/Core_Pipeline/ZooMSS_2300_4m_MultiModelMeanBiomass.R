@@ -10,9 +10,9 @@ library(tidyverse)
 library(patchwork)
 
 # Setup paths
-base_dir <- "c:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/GitHub/ZooMSS_2300/"
-figure_dir <- paste0(base_dir, "Figures/Biomass_Enhanced/")
-input_dir <- paste0(base_dir, "Input/")
+base_dir <- getwd()  # Use current working directory
+figure_dir <- file.path(base_dir, "Figures", "QAQC_Spatial_Biomass_2300")
+data_dir <- file.path(base_dir, "Output")
 
 cat("=== MULTI-MODEL MEAN BIOMASS PLOTS ===\n")
 cat("Date:", Sys.time(), "\n\n")
@@ -33,19 +33,19 @@ model_names <- c("cesm2-waccm", "ipsl-cm6a-lr", "ukesm1-0-ll")
 load_and_aggregate_data <- function() {
   
   # Load the combined weighted biomass timeseries
-  cat("Loading combined weighted biomass timeseries...\n")
-  all_data <- readRDS("Output/combined_weighted_biomass_timeseries.rds")
+  cat("Loading QAQC combined weighted biomass timeseries...\n")
+  all_data <- readRDS(file.path(data_dir, "QAQC_combined_corrected_biomass_timeseries.rds"))
   
   cat("Successfully loaded biomass data\n")
   cat("Dimensions:", nrow(all_data), "x", ncol(all_data), "\n")
   cat("Models:", paste(unique(all_data$model), collapse = ", "), "\n")
   cat("Scenarios:", paste(unique(all_data$scenario), collapse = ", "), "\n")
-  cat("Year range:", min(all_data$Year, na.rm = TRUE), "to", max(all_data$Year, na.rm = TRUE), "\n\n")
+  cat("Date range:", min(all_data$Date, na.rm = TRUE), "to", max(all_data$Date, na.rm = TRUE), "\n\n")
   
   # The data already has the aggregated biomass totals we need
-  # Just select the unique combinations (remove the species rows since we have totals)
+  # Just select the unique combinations (remove duplicates if any)
   spatial_means <- all_data %>%
-    select(Year, model, scenario, Zooplankton_Total, Fish_Total, TCB) %>%
+    select(Date, model, scenario, Zooplankton_Total, Fish_Total, TCB) %>%
     distinct() %>%
     filter(!is.na(Zooplankton_Total), !is.na(Fish_Total), !is.na(TCB))
   
@@ -59,7 +59,7 @@ create_baseline_data <- function(spatial_means) {
   
   # Calculate historical 1990-1999 baseline for each model and biomass group
   historical_baseline <- spatial_means %>%
-    filter(scenario == "historical", Year >= 1990, Year <= 1999) %>%
+    filter(scenario == "historical", Date >= 1990, Date <= 1999) %>%
     group_by(model) %>%
     summarise(
       Zoop_hist_baseline = mean(Zooplankton_Total, na.rm = TRUE),
@@ -88,9 +88,9 @@ create_ensemble_statistics <- function(baseline_data) {
   # Calculate ensemble statistics for each year and scenario
   ensemble_stats <- baseline_data %>%
     filter(scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over"),
-           Year >= 1970,
+           Date >= 1970,
            model %in% model_names) %>%
-    group_by(Year, scenario) %>%
+    group_by(Date, scenario) %>%
     summarise(
       # Zooplankton statistics
       Zoop_Mean = mean(Zoop_Change_1990s, na.rm = TRUE),
@@ -121,7 +121,7 @@ create_ensemble_statistics <- function(baseline_data) {
       .groups = 'drop'
     )
   
-  cat("Ensemble statistics calculated for", nrow(ensemble_stats), "Year/Scenario combinations\n")
+  cat("Ensemble statistics calculated for", nrow(ensemble_stats), "Date/Scenario combinations\n")
   cat("Models per combination:", unique(ensemble_stats$n_models), "\n")
   
   return(ensemble_stats)
@@ -153,7 +153,7 @@ create_multimodel_plot <- function(ensemble_stats, biomass_group, group_label, y
   
   # Prepare data for plotting
   plot_data <- ensemble_stats %>%
-    select(Year, scenario, all_of(c(mean_var, q25_var, q75_var, min_var, max_var))) %>%
+    select(Date, scenario, all_of(c(mean_var, q25_var, q75_var, min_var, max_var))) %>%
     rename(
       Mean = all_of(mean_var),
       Q25 = all_of(q25_var),
@@ -164,7 +164,7 @@ create_multimodel_plot <- function(ensemble_stats, biomass_group, group_label, y
   
   # Create the plot
   p <- plot_data %>%
-    ggplot(aes(x = Year, color = scenario, fill = scenario)) +
+    ggplot(aes(x = Date, color = scenario, fill = scenario)) +
     # Add uncertainty bands (IQR)
     geom_ribbon(aes(ymin = Q25, ymax = Q75), alpha = 0.3, color = NA) +
     # Add range bands (min/max) - more transparent
@@ -257,19 +257,19 @@ y_limits_tcb <- add_padding(y_limits_tcb)
 # 1. Zooplankton Multi-Model Mean Plot
 cat("Creating zooplankton multi-model mean plot...\n")
 zoop_ensemble_plot <- create_multimodel_plot(ensemble_stats, "zooplankton", "Zooplankton", y_limits_zoop)
-ggsave(paste0(figure_dir, "zooplankton_multimodel_mean.png"),
+ggsave(file.path(figure_dir, "QAQC_zooplankton_multimodel_mean.png"),
        zoop_ensemble_plot, width = 14, height = 8, dpi = 300, bg = "white")
 
 # 2. Fish Multi-Model Mean Plot  
 cat("Creating fish multi-model mean plot...\n")
 fish_ensemble_plot <- create_multimodel_plot(ensemble_stats, "fish", "Fish", y_limits_fish)
-ggsave(paste0(figure_dir, "fish_multimodel_mean.png"),
+ggsave(file.path(figure_dir, "QAQC_fish_multimodel_mean.png"),
        fish_ensemble_plot, width = 14, height = 8, dpi = 300, bg = "white")
 
 # 3. Total Consumer Biomass Multi-Model Mean Plot
 cat("Creating TCB multi-model mean plot...\n")
 tcb_ensemble_plot <- create_multimodel_plot(ensemble_stats, "tcb", "Total Consumer Biomass", y_limits_tcb)
-ggsave(paste0(figure_dir, "tcb_multimodel_mean.png"),
+ggsave(file.path(figure_dir, "QAQC_tcb_multimodel_mean.png"),
        tcb_ensemble_plot, width = 14, height = 8, dpi = 300, bg = "white")
 
 # Create a combined plot showing all three biomass groups
@@ -278,20 +278,20 @@ combined_plot <- (zoop_ensemble_plot / fish_ensemble_plot / tcb_ensemble_plot) +
   plot_layout(guides = "collect") &
   theme(legend.position = "bottom")
 
-ggsave(paste0(figure_dir, "all_biomass_multimodel_mean_combined.png"),
+ggsave(file.path(figure_dir, "QAQC_all_biomass_multimodel_mean_combined.png"),
        combined_plot, width = 14, height = 18, dpi = 300, bg = "white")
 
 # Save ensemble statistics for reference
-write.csv(ensemble_stats, paste0(figure_dir, "ensemble_biomass_statistics.csv"), row.names = FALSE)
+write.csv(ensemble_stats, file.path(figure_dir, "QAQC_ensemble_biomass_statistics.csv"), row.names = FALSE)
 
 # Print summary information
 cat("\n=== MULTI-MODEL MEAN PLOTS CREATED SUCCESSFULLY ===\n")
 cat("Files saved:\n")
-cat("- zooplankton_multimodel_mean.png\n")
-cat("- fish_multimodel_mean.png\n")
-cat("- tcb_multimodel_mean.png\n")
-cat("- all_biomass_multimodel_mean_combined.png\n")
-cat("- ensemble_biomass_statistics.csv\n\n")
+cat("- QAQC_zooplankton_multimodel_mean.png\n")
+cat("- QAQC_fish_multimodel_mean.png\n")
+cat("- QAQC_tcb_multimodel_mean.png\n")
+cat("- QAQC_all_biomass_multimodel_mean_combined.png\n")
+cat("- QAQC_ensemble_biomass_statistics.csv\n\n")
 
 cat("Plot features:\n")
 cat("- Thick line: Multi-model ensemble mean\n")
@@ -303,7 +303,7 @@ cat("Ensemble statistics summary:\n")
 ensemble_summary <- ensemble_stats %>%
   group_by(scenario) %>%
   summarise(
-    Year_range = paste(min(Year), "to", max(Year)),
+    Date_range = paste(min(Date), "to", max(Date)),
     Zoop_mean_range = paste(round(min(Zoop_Mean, na.rm=TRUE), 1), "to", round(max(Zoop_Mean, na.rm=TRUE), 1), "%"),
     Fish_mean_range = paste(round(min(Fish_Mean, na.rm=TRUE), 1), "to", round(max(Fish_Mean, na.rm=TRUE), 1), "%"),
     TCB_mean_range = paste(round(min(TCB_Mean, na.rm=TRUE), 1), "to", round(max(TCB_Mean, na.rm=TRUE), 1), "%"),

@@ -344,5 +344,5 @@ run_workflow <- function(folder_path) {
 }
 
 # Execute the workflow with your folder path
-folder_path <- "~/R Projects/ZooMSS_2300/Input/2300_processed/"
+folder_path <- "Input/2300_processed/"
 run_workflow(folder_path)

@@ -3,16 +3,16 @@
 # ================================================================
 # Creates separate percentage change plots for Fish, TCB, and Zooplankton
 # Each plot shows the three ESMs in separate panels
-# Based on ZooMSS_2300_4g_EnhancedPlotting.R structure
+# Version: Updated for QAQC run
 
 # Load required libraries
 library(tidyverse)
 library(patchwork)
 
-# Setup paths
-base_dir <- "c:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/GitHub/ZooMSS_2300/"
-figure_dir <- paste0(base_dir, "Figures/Biomass_Enhanced/")
-input_dir <- paste0(base_dir, "Input/")
+# Setup paths for QAQC run
+base_dir <- getwd()
+figure_dir <- file.path(base_dir, "Figures", "QAQC_Spatial_Biomass_2300")
+input_dir <- file.path(base_dir, "Output")
 
 cat("=== SEPARATE BIOMASS PLOTS BY GROUP AND MODEL ===\n")
 cat("Date:", Sys.time(), "\n\n")
@@ -34,20 +34,20 @@ names(model_labels) <- model_names
 # Load and process data function
 load_and_aggregate_data <- function() {
   
-  # Load the combined weighted biomass timeseries
-  cat("Loading combined weighted biomass timeseries...\n")
-  all_data <- readRDS("Output/combined_weighted_biomass_timeseries.rds")
+  # Load the combined corrected biomass timeseries from QAQC run
+  cat("Loading QAQC combined corrected biomass timeseries...\n")
+  all_data <- readRDS(file.path(input_dir, "QAQC_combined_corrected_biomass_timeseries.rds"))
   
   cat("Successfully loaded biomass data\n")
   cat("Dimensions:", nrow(all_data), "x", ncol(all_data), "\n")
   cat("Models:", paste(unique(all_data$model), collapse = ", "), "\n")
   cat("Scenarios:", paste(unique(all_data$scenario), collapse = ", "), "\n")
-  cat("Year range:", min(all_data$Year, na.rm = TRUE), "to", max(all_data$Year, na.rm = TRUE), "\n\n")
+  cat("Date range:", min(all_data$Date, na.rm = TRUE), "to", max(all_data$Date, na.rm = TRUE), "\n\n")
   
   # The data already has the aggregated biomass totals we need
   # Just select the unique combinations (remove the species rows since we have totals)
   spatial_means <- all_data %>%
-    select(Year, model, scenario, Zooplankton_Total, Fish_Total, TCB) %>%
+    select(Date, model, scenario, Zooplankton_Total, Fish_Total, TCB) %>%
     distinct() %>%
     filter(!is.na(Zooplankton_Total), !is.na(Fish_Total), !is.na(TCB))
   
@@ -61,7 +61,7 @@ create_baseline_data <- function(spatial_means) {
   
   # Calculate historical 1990-1999 baseline for each model and biomass group
   historical_baseline <- spatial_means %>%
-    filter(scenario == "historical", Year >= 1990, Year <= 1999) %>%
+    filter(scenario == "historical", Date >= 1990, Date <= 1999) %>%
     group_by(model) %>%
     summarise(
       Zoop_hist_baseline = mean(Zooplankton_Total, na.rm = TRUE),
@@ -93,9 +93,9 @@ create_biomass_plot <- function(data, biomass_group, group_label, y_limits = NUL
   
   plot_data <- data %>%
     filter(scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over"),
-           Year >= 1970,
+           Date >= 1970,
            model %in% model_names) %>%
-    select(Year, scenario, model, all_of(change_var)) %>%
+    select(Date, scenario, model, all_of(change_var)) %>%
     rename(Change = all_of(change_var)) %>%
     mutate(
       model_label = model_labels[model],
@@ -104,7 +104,7 @@ create_biomass_plot <- function(data, biomass_group, group_label, y_limits = NUL
   
   # Create the plot
   p <- plot_data %>%
-    ggplot(aes(x = Year, y = Change, color = scenario)) +
+    ggplot(aes(x = Date, y = Change, color = scenario)) +
     geom_line(linewidth = 1.2, alpha = 0.9) +
     geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.7, color = "black") +
     geom_vline(xintercept = c(1990, 1999), linetype = "dotted", alpha = 0.5, color = "darkblue") +
@@ -114,11 +114,12 @@ create_biomass_plot <- function(data, biomass_group, group_label, y_limits = NUL
     scale_color_manual(values = scenario_colors, name = "Scenario") +
     scale_x_continuous(breaks = seq(1980, 2300, 40), minor_breaks = seq(1980, 2300, 20)) +
     labs(
-      title = paste(group_label, "Change Relative to Historical 1990-1999 Baseline"),
+      title = paste(group_label, "Change Relative to Historical 1990-1999 Baseline - QAQC"),
       subtitle = "Percentage change from historical simulation 1990-1999 reference period by Earth System Model",
       x = "Year",
       y = "Change (%)",
-      color = "Scenario"
+      color = "Scenario",
+      caption = "QAQC Run - November 2025"
     ) +
     theme_bw() +
     theme(
@@ -172,11 +173,11 @@ baseline_data <- create_baseline_data(spatial_means)
 cat("Creating individual biomass plots...\n")
 
 # Calculate reasonable y-limits for each group
-y_limits_zoop <- range(baseline_data$Zoop_Change_1990s[baseline_data$Year >= 1970 & 
+y_limits_zoop <- range(baseline_data$Zoop_Change_1990s[baseline_data$Date >= 1970 & 
                        baseline_data$scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over")], na.rm = TRUE)
-y_limits_fish <- range(baseline_data$Fish_Change_1990s[baseline_data$Year >= 1970 & 
+y_limits_fish <- range(baseline_data$Fish_Change_1990s[baseline_data$Date >= 1970 & 
                        baseline_data$scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over")], na.rm = TRUE)
-y_limits_tcb <- range(baseline_data$TCB_Change_1990s[baseline_data$Year >= 1970 & 
+y_limits_tcb <- range(baseline_data$TCB_Change_1990s[baseline_data$Date >= 1970 & 
                       baseline_data$scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over")], na.rm = TRUE)
 
 # Add some padding to the limits
@@ -192,27 +193,27 @@ y_limits_tcb <- add_padding(y_limits_tcb)
 # 1. Zooplankton Plot
 cat("Creating zooplankton plot...\n")
 zoop_plot <- create_biomass_plot(baseline_data, "zooplankton", "Zooplankton", y_limits_zoop)
-ggsave(paste0(figure_dir, "zooplankton_percentage_change_by_model.png"),
+ggsave(file.path(figure_dir, "QAQC_zooplankton_percentage_change_by_model.png"),
        zoop_plot, width = 16, height = 8, dpi = 300, bg = "white")
 
 # 2. Fish Plot  
 cat("Creating fish plot...\n")
 fish_plot <- create_biomass_plot(baseline_data, "fish", "Fish", y_limits_fish)
-ggsave(paste0(figure_dir, "fish_percentage_change_by_model.png"),
+ggsave(file.path(figure_dir, "QAQC_fish_percentage_change_by_model.png"),
        fish_plot, width = 16, height = 8, dpi = 300, bg = "white")
 
 # 3. Total Consumer Biomass Plot
 cat("Creating TCB plot...\n")
 tcb_plot <- create_biomass_plot(baseline_data, "tcb", "Total Consumer Biomass", y_limits_tcb)
-ggsave(paste0(figure_dir, "tcb_percentage_change_by_model.png"),
+ggsave(file.path(figure_dir, "QAQC_tcb_percentage_change_by_model.png"),
        tcb_plot, width = 16, height = 8, dpi = 300, bg = "white")
 
 # Print summary information
 cat("\n=== PLOTS CREATED SUCCESSFULLY ===\n")
-cat("Files saved:\n")
-cat("- zooplankton_percentage_change_by_model.png\n")
-cat("- fish_percentage_change_by_model.png\n")
-cat("- tcb_percentage_change_by_model.png\n\n")
+cat("Files saved to:", figure_dir, "\n")
+cat("- QAQC_zooplankton_percentage_change_by_model.png\n")
+cat("- QAQC_fish_percentage_change_by_model.png\n")
+cat("- QAQC_tcb_percentage_change_by_model.png\n\n")
 
 cat("Data ranges:\n")
 cat("Zooplankton change range:", round(y_limits_zoop, 1), "%\n")

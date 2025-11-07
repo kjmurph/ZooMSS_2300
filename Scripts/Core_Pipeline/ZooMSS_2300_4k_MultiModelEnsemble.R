@@ -2,6 +2,7 @@
 # MULTI-MODEL ENSEMBLE SPATIAL ANALYSIS
 # ==============================================================================
 # Purpose: Create ensemble statistics (mean, median, variability) for SSP scenarios
+# Version: Updated for QAQC run
 # ==============================================================================
 
 library(tidyverse)
@@ -12,9 +13,10 @@ library(maps)
 library(RColorBrewer)
 library(patchwork)
 
-# Set directories
-figure_dir <- "Figures/Spatial_Biomass/"
-input_dir <- "Output/Biomass_projections/"
+# Set directories for QAQC run
+base_dir <- getwd()
+input_dir <- file.path(base_dir, "Output", "Step3d_ZooMSS_Biomass_Projections_2300")
+figure_dir <- file.path(base_dir, "Figures", "QAQC_Spatial_Biomass_2300")
 
 # Create figures directory
 if (!dir.exists(figure_dir)) {
@@ -165,7 +167,7 @@ create_ensemble_plot <- function(data, variable, title, subtitle = "",
 # ==============================================================================
 
 # Get list of biomass files for SSP scenarios
-biomass_files <- list.files(input_dir, pattern = "Biomass_ClimateChange.*\\.rds$", full.names = TRUE)
+biomass_files <- list.files(input_dir, pattern = "ZooMSS_Biomass_2300.*\\.rds$", full.names = TRUE)
 
 # Select files for ensemble analysis (SSP1-2.6 and SSP5-8.5)
 ssp126_files <- grep("ssp126", biomass_files, value = TRUE)
@@ -214,11 +216,11 @@ load_ensemble_data <- function(file_path, time_slice) {
   
   # Filter to specific time slice
   if (time_slice == "recent") {
-    data <- data %>% filter(Year >= 2090 & Year <= 2099)
+    data <- data %>% filter(Date >= 2090 & Date <= 2099)
   } else if (time_slice == "future") {
-    data <- data %>% filter(Year >= 2290 & Year <= 2299)
+    data <- data %>% filter(Date >= 2290 & Date <= 2299)
   } else if (time_slice == "historical") {
-    data <- data %>% filter(Year >= 1990 & Year <= 1999)
+    data <- data %>% filter(Date >= 1990 & Date <= 1999)
   }
   
   # Calculate spatial means for each grid cell
@@ -586,25 +588,25 @@ create_custom_ensemble_comparison <- function(ssp126_data, ssp585_data, period_n
 # SSP1-2.6 Recent (2090s)
 cat("Creating SSP1-2.6 recent ensemble plot...\n")
 ssp126_recent_plot <- create_ensemble_comparison(ssp126_recent_ensemble, "SSP1-2.6", "2090s")
-ggsave(paste0(figure_dir, "ensemble_ssp126_recent_comparison.png"),
+ggsave(paste0(figure_dir, "/QAQC_ensemble_ssp126_recent_comparison.png"),
        ssp126_recent_plot, width = 18, height = 8, dpi = 300, bg = "white")
 
 # SSP1-2.6 Future (2290s)
 cat("Creating SSP1-2.6 future ensemble plot...\n")
 ssp126_future_plot <- create_ensemble_comparison(ssp126_future_ensemble, "SSP1-2.6", "2290s")
-ggsave(paste0(figure_dir, "ensemble_ssp126_future_comparison.png"),
+ggsave(paste0(figure_dir, "/QAQC_ensemble_ssp126_future_comparison.png"),
        ssp126_future_plot, width = 18, height = 8, dpi = 300, bg = "white")
 
 # SSP5-8.5 Recent (2090s)
 cat("Creating SSP5-8.5 recent ensemble plot...\n")
 ssp585_recent_plot <- create_ensemble_comparison(ssp585_recent_ensemble, "SSP5-8.5", "2090s")
-ggsave(paste0(figure_dir, "ensemble_ssp585_recent_comparison.png"),
+ggsave(paste0(figure_dir, "/QAQC_ensemble_ssp585_recent_comparison.png"),
        ssp585_recent_plot, width = 18, height = 8, dpi = 300, bg = "white")
 
 # SSP5-8.5 Future (2290s)
 cat("Creating SSP5-8.5 future ensemble plot...\n")
 ssp585_future_plot <- create_ensemble_comparison(ssp585_future_ensemble, "SSP5-8.5", "2290s")
-ggsave(paste0(figure_dir, "ensemble_ssp585_future_comparison.png"),
+ggsave(paste0(figure_dir, "/QAQC_ensemble_ssp585_future_comparison.png"),
        ssp585_future_plot, width = 18, height = 8, dpi = 300, bg = "white")
 
 # ==============================================================================
@@ -676,11 +678,11 @@ create_scenario_comparison <- function(ssp126_data, ssp585_data, period_name) {
 
 # Create combined scenario comparisons
 recent_comparison <- create_scenario_comparison(ssp126_recent_ensemble, ssp585_recent_ensemble, "2090s")
-ggsave(paste0(figure_dir, "ensemble_scenarios_recent_comparison.png"),
+ggsave(paste0(figure_dir, "/QAQC_ensemble_scenarios_recent_comparison.png"),
        recent_comparison, width = 16, height = 18, dpi = 300, bg = "white")
 
 future_comparison <- create_scenario_comparison(ssp126_future_ensemble, ssp585_future_ensemble, "2290s")
-ggsave(paste0(figure_dir, "ensemble_scenarios_future_comparison.png"),
+ggsave(paste0(figure_dir, "/QAQC_ensemble_scenarios_future_comparison.png"),
        future_comparison, width = 16, height = 18, dpi = 300, bg = "white")
 
 # ==============================================================================
@@ -715,43 +717,43 @@ global_summary <- all_ensemble_stats %>%
     pct_low_agreement = round(low_agreement_cells / n_cells * 100, 1)
   )
 
-write.csv(global_summary, paste0(figure_dir, "ensemble_summary_statistics.csv"), row.names = FALSE)
+write.csv(global_summary, paste0(figure_dir, "/QAQC_ensemble_summary_statistics.csv"), row.names = FALSE)
 
 cat("\n=== MULTI-MODEL ENSEMBLE ANALYSIS COMPLETE ===\n")
 cat("Individual scenario plots saved:\n")
-cat("- ensemble_ssp126_recent_comparison.png\n")
-cat("- ensemble_ssp126_future_comparison.png\n")
-cat("- ensemble_ssp585_recent_comparison.png\n")
-cat("- ensemble_ssp585_future_comparison.png\n")
+cat("- QAQC_ensemble_ssp126_recent_comparison.png\n")
+cat("- QAQC_ensemble_ssp126_future_comparison.png\n")
+cat("- QAQC_ensemble_ssp585_recent_comparison.png\n")
+cat("- QAQC_ensemble_ssp585_future_comparison.png\n")
 cat("\nCombined scenario plots saved:\n")
-cat("- ensemble_scenarios_recent_comparison.png\n")
-cat("- ensemble_scenarios_future_comparison.png\n")
+cat("- QAQC_ensemble_scenarios_recent_comparison.png\n")
+cat("- QAQC_ensemble_scenarios_future_comparison.png\n")
 
 # Create enhanced uncertainty plots with alternative metrics
 cat("\nCreating enhanced uncertainty plots...\n")
 
 # SSP1-2.6 Future uncertainty
 ssp126_future_uncertainty <- create_uncertainty_comparison(ssp126_future_ensemble, "SSP1-2.6", "2290s")
-ggsave(paste0(figure_dir, "uncertainty_ssp126_future.png"),
+ggsave(paste0(figure_dir, "/QAQC_uncertainty_ssp126_future.png"),
        ssp126_future_uncertainty, width = 18, height = 8, dpi = 300, bg = "white")
 
 # SSP5-8.5 Future uncertainty
 ssp585_future_uncertainty <- create_uncertainty_comparison(ssp585_future_ensemble, "SSP5-8.5", "2290s")
-ggsave(paste0(figure_dir, "uncertainty_ssp585_future.png"),
+ggsave(paste0(figure_dir, "/QAQC_uncertainty_ssp585_future.png"),
        ssp585_future_uncertainty, width = 18, height = 8, dpi = 300, bg = "white")
 
 cat("\nEnhanced uncertainty plots saved:\n")
-cat("- uncertainty_ssp126_future.png\n")
-cat("- uncertainty_ssp585_future.png\n")
+cat("- QAQC_uncertainty_ssp126_future.png\n")
+cat("- QAQC_uncertainty_ssp585_future.png\n")
 
 # Create custom ensemble comparison (mean, CV, agreement only)
 cat("\nCreating custom ensemble comparison (mean, CV, agreement)...\n")
 custom_future_comparison <- create_custom_ensemble_comparison(ssp126_future_ensemble, ssp585_future_ensemble, "2290s")
-ggsave(paste0(figure_dir, "ensemble_scenarios_future_comparison.png"),
+ggsave(paste0(figure_dir, "/QAQC_ensemble_custom_future_comparison.png"),
        custom_future_comparison, width = 18, height = 12, dpi = 300, bg = "white")
 
 cat("\nCustom ensemble plot saved:\n")
-cat("- ensemble_scenarios_future_comparison.png (UPDATED: mean, CV, agreement)\n")
-cat("\nSummary statistics saved to: ensemble_summary_statistics.csv\n")
+cat("- QAQC_ensemble_custom_future_comparison.png (mean, CV, agreement)\n")
+cat("\nSummary statistics saved to: QAQC_ensemble_summary_statistics.csv\n")
 
 print(global_summary)

@@ -1,7 +1,7 @@
 # Split large climate file by both model and experiment for manageable sizes
 library(tidyverse)
 
-base_dir <- "~/R Projects/ZooMSS_2300/"
+base_dir <- getwd()  # Use current working directory
 
 cat("Splitting climate data by model AND experiment...\n")
 

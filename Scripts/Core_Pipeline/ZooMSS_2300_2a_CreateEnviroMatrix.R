@@ -6,7 +6,7 @@ library(tidyverse)
 library(tidync)
 library(raster)
 
-base_dir <- "C:/Users/kjmurphy/OneDrive - University of Tasmania/Documents/R Projects/ZooMSS_2300/Input/"
+base_dir <- "Input/"
 
 # Define the models and experiments we expect to find
 ModelArray <- c("cesm2-waccm", "ipsl-cm6a-lr", "ukesm1-0-ll")

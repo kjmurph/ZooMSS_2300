@@ -1,8 +1,8 @@
 library(tidyverse)
-source("fZooMSS_Xtras.R")
+source("Scripts/Utilities/fZooMSS_Xtras.R")
 
 # Set your base directory and input path
-base_dir <- "~/R Projects/ZooMSS_2300/"
+base_dir <- getwd()  # Use current working directory
 input_dir <- file.path(base_dir, "Input/2300_processed/")
 
 # Get list of all .rds files in the directory
@@ -76,19 +76,45 @@ for(i in 1:length(rds_files)) {
   }
 }
 
-# Combine all processed dataframes
-cat("\nCombining all processed files...\n")
-combined_data <- bind_rows(processed_data_list)
+# Save each processed file back to temp location first
+cat("\nSaving processed files individually...\n")
+temp_dir <- file.path(base_dir, "Output/temp_compiled/")
+dir.create(temp_dir, showWarnings = FALSE, recursive = TRUE)
+
+for(i in 1:length(processed_data_list)) {
+  temp_file <- file.path(temp_dir, paste0("processed_", i, ".rds"))
+  saveRDS(processed_data_list[[i]], temp_file)
+  cat("Saved temp file", i, "of", length(processed_data_list), "\n")
+}
+
+# Clear memory before combining
+rm(processed_data_list)
+gc()
+
+# Combine files incrementally to avoid memory issues
+cat("\nCombining all processed files incrementally...\n")
+output_file <- file.path(base_dir, "Output/ClimateChange_2300_Compiled.rds")
+
+# Initialize with first file
+combined_data <- readRDS(file.path(temp_dir, "processed_1.rds"))
+total_rows <- nrow(combined_data)
+cat("Loaded file 1:", total_rows, "rows\n")
+
+# Add remaining files one at a time
+for(i in 2:length(rds_files)) {
+  temp_file <- file.path(temp_dir, paste0("processed_", i, ".rds"))
+  next_chunk <- readRDS(temp_file)
+  combined_data <- bind_rows(combined_data, next_chunk)
+  rm(next_chunk)
+  gc()
+  
+  total_rows <- nrow(combined_data)
+  cat("Added file", i, "- Total rows now:", total_rows, "\n")
+}
 
 # Print summary of combined data
 cat("\nSummary of combined data:\n")
 print(glimpse(combined_data))
-
-# Check for any missing values
-cat("\nChecking for missing values:\n")
-missing_summary <- combined_data %>%
-  summarise_all(~sum(is.na(.)))
-print(missing_summary)
 
 # Summary by Model and Experiment
 cat("\nData distribution by Model and Experiment:\n")
@@ -102,14 +128,15 @@ summary_table <- combined_data %>%
 print(summary_table)
 
 # Save the combined dataset
-output_file <- file.path(base_dir, "Output/ClimateChange_2300_Compiled.rds")
 saveRDS(combined_data, output_file)
 
 cat("\nCombined dataset saved to:", output_file, "\n")
 cat("Total rows in combined dataset:", nrow(combined_data), "\n")
 
-# Clean up memory
-rm(processed_data_list)
+# Clean up temp files and memory
+cat("\nCleaning up temporary files...\n")
+unlink(temp_dir, recursive = TRUE)
+rm(combined_data)
 gc()
 
 cat("\nProcessing complete!\n")

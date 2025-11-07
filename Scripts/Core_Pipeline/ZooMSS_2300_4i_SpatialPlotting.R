@@ -2,6 +2,7 @@
 # SPATIAL BIOMASS PLOTTING 
 # ==============================================================================
 # Purpose: Create spatial plots showing biomass distributions and changes
+# Version: Updated for QAQC run
 # ==============================================================================
 
 library(tidyverse)
@@ -14,9 +15,10 @@ library(RColorBrewer)
 library(patchwork)
 library(sf)
 
-# Set directories
-figure_dir <- "Figures/Spatial_Biomass/"
-input_dir <- "Output/Biomass_projections/"
+# Set directories for QAQC run
+base_dir <- getwd()
+input_dir <- file.path(base_dir, "Output", "Step3d_ZooMSS_Biomass_Projections_2300")
+figure_dir <- file.path(base_dir, "Figures", "QAQC_Spatial_Biomass_2300")
 
 # Create figures directory
 if (!dir.exists(figure_dir)) {
@@ -30,8 +32,8 @@ cat("Date:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
 # LOAD AND PREPARE SPATIAL DATA
 # ==============================================================================
 
-# Get list of biomass files
-biomass_files <- list.files(input_dir, pattern = "Biomass_ClimateChange.*\\.rds$", full.names = TRUE)
+# Get list of biomass files from QAQC run
+biomass_files <- list.files(input_dir, pattern = "ZooMSS_Biomass_2300_.*\\.rds$", full.names = TRUE)
 cat("Found", length(biomass_files), "biomass files for spatial analysis\n")
 
 # Load comprehensive set for complete multi-model spatial analysis
@@ -70,34 +72,15 @@ load_spatial_biomass <- function(file_path, time_slice = NULL) {
   cat("Loading:", basename(file_path), "\n")
   
   # Extract metadata from filename
-  # Format: Biomass_ClimateChange_Compiled_withZooMSS_MODEL_SCENARIO_Control.rds
+  # Format: ZooMSS_Biomass_2300_MODEL_SCENARIO.rds
   filename <- basename(file_path)
+  parts <- str_remove(filename, "ZooMSS_Biomass_2300_") %>%
+    str_remove("\\.rds$") %>%
+    str_split("_", n = 2) %>%
+    .[[1]]
   
-  # Remove prefix and suffix to get model_scenario part
-  name_parts <- str_replace(filename, "Biomass_ClimateChange_Compiled_withZooMSS_", "")
-  name_parts <- str_replace(name_parts, "_Control\\.rds$", "")
-  
-  # Split to get model and scenario
-  parts <- str_split(name_parts, "_")[[1]]
-  
-  # Handle different model naming (some have dashes)
-  if (length(parts) >= 2) {
-    # Find where scenario starts (last part that's a known scenario)
-    scenarios <- c("historical", "picontrol", "ssp126", "ssp534-over", "ssp585")
-    scenario_idx <- which(parts %in% scenarios)
-    
-    if (length(scenario_idx) > 0) {
-      scenario <- parts[scenario_idx[1]]
-      model <- paste(parts[1:(scenario_idx[1]-1)], collapse = "-")
-    } else {
-      # Fallback
-      model <- paste(parts[1:(length(parts)-1)], collapse = "-")
-      scenario <- parts[length(parts)]
-    }
-  } else {
-    model <- "unknown"
-    scenario <- "unknown"
-  }
+  model <- parts[1]
+  scenario <- parts[2]
   
   cat("  Detected - Model:", model, "Scenario:", scenario, "\n")
   
@@ -112,24 +95,14 @@ load_spatial_biomass <- function(file_path, time_slice = NULL) {
   # Filter to specific time slice if requested
   if (!is.null(time_slice)) {
     if (time_slice == "recent") {
-      # Use 2090-2099 for recent projections (SSP scenarios)
-      # For piControl, use equivalent period (2090-2099 if available, otherwise 2090-2100)
-      if (scenario == "picontrol") {
-        data <- data %>% filter(Year >= 2090 & Year <= 2100)
-      } else {
-        data <- data %>% filter(Year >= 2090 & Year <= 2099)
-      }
+      # Use 2090-2099 for recent projections
+      data <- data %>% filter(Date >= 2090 & Date <= 2099)
     } else if (time_slice == "future") {
-      # Use 2290-2299 for far future (SSP scenarios only)
-      # For piControl, use later period (2090-2100 since it doesn't extend to 2290s)
-      if (scenario == "picontrol") {
-        data <- data %>% filter(Year >= 2090 & Year <= 2100)
-      } else {
-        data <- data %>% filter(Year >= 2290 & Year <= 2299)
-      }
+      # Use 2290-2299 for far future
+      data <- data %>% filter(Date >= 2290 & Date <= 2299)
     } else if (time_slice == "historical") {
-      # Use 1990-1999 for historical reference for all scenarios
-      data <- data %>% filter(Year >= 1990 & Year <= 1999)
+      # Use 1990-1999 for historical reference
+      data <- data %>% filter(Date >= 1990 & Date <= 1999)
     }
   }
   
@@ -204,7 +177,7 @@ calculate_totals <- function(data) {
       Zooplankton_Total = mean(Zooplankton_Total, na.rm = TRUE),
       Fish_Total = mean(Fish_Total, na.rm = TRUE),
       TCB = mean(TCB, na.rm = TRUE),
-      n_years = n_distinct(Year),
+      n_years = n_distinct(Date),
       .groups = 'drop'
     )
 }
