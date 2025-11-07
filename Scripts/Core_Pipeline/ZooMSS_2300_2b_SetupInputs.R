@@ -4,8 +4,10 @@ library(tidyverse)
 library(lubridate)
 
 # Set directory paths
-base_dir <- "~/R Projects/ZooMSS_2300/Input/"
-out_dir <- "~/R Projects/ZooMSS_2300/Input/2300_processed/"
+# Prefer the current project root so this runs inside the repo regardless of user home layout
+project_root <- normalizePath(".", winslash = "/", mustWork = TRUE)
+base_dir <- file.path(project_root, "Input/")
+out_dir <- file.path(base_dir, "2300_processed/")
 
 # Updated model names to match actual file patterns
 ModelArray <- c("cesm2-waccm", "ipsl-cm6a-lr", "ukesm1-0-ll")
@@ -59,9 +61,9 @@ for (m in 1:length(ModelArray)) {
     cat("  Looking for tos files with pattern:", tos_pattern, "\n")
     cat("  Looking for chla files with pattern:", chla_pattern, "\n")
 
-    # Search in the specific subdirectories for files matching the patterns
-    ftos <- list.files(paste0(base_dir, "tos/"), pattern = tos_pattern, full.names = TRUE)
-    fchl <- list.files(paste0(base_dir, "chl/"), pattern = chla_pattern, full.names = TRUE)
+  # Search in the specific subdirectories for files matching the patterns
+  ftos <- list.files(file.path(base_dir, "tos"), pattern = tos_pattern, full.names = TRUE)
+  fchl <- list.files(file.path(base_dir, "chl"), pattern = chla_pattern, full.names = TRUE)
 
     cat("  tos files found:", length(ftos), "\n")
     if(length(ftos) == 0) {
@@ -96,11 +98,11 @@ for (m in 1:length(ModelArray)) {
       result_df <- NULL
 
       # Get information about the rasters first
-      tos_info <- raster(ftos)
-      chl_info <- raster(fchl)
+  tos_info <- raster(ftos)
+  chl_info <- raster(fchl)
 
       # Get number of layers
-      tos_stack <- stack(ftos)
+  tos_stack <- stack(ftos)
       n_layers <- nlayers(tos_stack)
       cat("  Number of layers:", n_layers, "\n")
 

@@ -1,10 +1,12 @@
 library(tidyverse)
 library(yaImpute)
 
-source("fZooMSS_Xtras.R")
+# Resolve project root and utilities
+project_root <- normalizePath(".", winslash = "/", mustWork = TRUE)
+source(file.path(project_root, "Scripts/Utilities/fZooMSS_Xtras.R"))
 
 # Set your base directory and input path
-base_dir <- "~/R Projects/ZooMSS_2300/"
+base_dir <- project_root
 
 #### Load ZooMSS Matrix Data ####
 enviro_data_original <- read_rds(file.path(base_dir,"Enviro_Matrix/","ClimateChange_Compiled_Distinct.rds"))
@@ -47,6 +49,14 @@ cat("Chlo range - Novel:", range(enviro_data$chlo[enviro_data$source == "novel"]
 esm_files <- list.files(file.path(base_dir, "Input", "2300_processed"),
                         pattern = "\\.rds$",
                         full.names = TRUE)
+# Optional filter to process a subset (set env var PROCESS_PATTERN or pass --args pattern)
+args <- commandArgs(trailingOnly = TRUE)
+pattern_arg <- if (length(args) > 0) args[1] else Sys.getenv("PROCESS_PATTERN", unset = "")
+if (nzchar(pattern_arg)) {
+  cat("\nFiltering esm_files with pattern:", pattern_arg, "\n")
+  esm_files <- esm_files[grepl(pattern_arg, basename(esm_files))]
+  cat("Files to process:", length(esm_files), "\n")
+}
 
 minb <- 1
 maxb <- 158 # Max weight of 100 kg

@@ -1,0 +1,29 @@
+Processing Summary - UKESM ssp534-over 2101-2300 (Date: 2025-11-03)
+
+Steps performed:
+1) Converted phyc-top annual to chla-top annual for 2101-2300
+   - Input: Input/phyc/ukesm1-0-ll_r4i1p1f2_ssp534-over_phyc-top_60arcmin_global_annual_2101_2300.nc
+   - Output: Input/chl/ukesm1-0-ll_r4i1p1f2_ssp534-over_chla-top_60arcmin_global_annual_2101_2300.nc
+   - Conversion: Chl = 10^((log10(C_mg_m3) - 1.79) / 0.89)
+
+2) Prepared processed ESM inputs (SST, Chl) in Input/2300_processed (no regeneration required)
+   - Existing: Input/2300_processed/2300_ukesm1-0-ll_ssp534-over_2101-2300.rds
+
+3) Mapped ESM enviro points to ZooMSS results (nearest neighbor in SST, log10(Chl) space)
+   - Script: Scripts/Core_Pipeline/ZooMSS_2300_3d_Experiments.R (filtered to target file)
+   - Matching: yaImpute::ann, k=1
+
+4) Output generated:
+   - Output/Biomass_projections/Biomass_ClimateChange_Compiled_withZooMSS_ukesm1-0-ll_ssp534-over_2101-2300_Control.rds
+
+Quick checks:
+- Rows: 8,272,800
+- Year range: 2101–2300 (sample inspected)
+- Columns include: locations (Lon,Lat), Year, SST, Chl, Model, Experiment, Chl_log10, species biomasses
+
+Notes:
+- Updated scripts to be path-portable (use project root instead of user home paths):
+  * Scripts/Core_Pipeline/ZooMSS_2300_2b_SetupInputs.R
+  * Scripts/Core_Pipeline/ZooMSS_2300_3d_Experiments.R (also added PROCESS_PATTERN filter)
+- To re-run mapping for this file only:
+  Set env var PROCESS_PATTERN=ukesm1-0-ll_ssp534-over_2101-2300 and run the 3d_Experiments script.
