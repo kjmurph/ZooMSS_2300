@@ -12,8 +12,8 @@ library(patchwork)
 library(viridis)
 
 # Setup paths
-base_dir <- file.path(dirname(getwd()), "..")  # Go up from Scripts/Core_Pipeline to base
-input_dir <- file.path(base_dir, "Output", "Step3d_FishMIP_Format")
+base_dir <- getwd()  # Base directory
+input_dir <- file.path(base_dir, "Output", "Step3d_FishMIP_Format_submission_version")
 figure_dir <- file.path(base_dir, "Figures", "FishMIP_Outputs")
 
 # Create output directory
@@ -132,11 +132,12 @@ fishmip_changes <- fishmip_timeseries %>%
 
 cat("Baseline calculations complete\n\n")
 
-#### PART 4: TCB Timeseries Plot ####
-cat("=== Creating TCB timeseries plot ===\n")
+#### PART 4: TCB Timeseries Plots (% Change AND Absolute Values) ####
+cat("=== Creating TCB timeseries plots ===\n")
 
-plot_tcb <- fishmip_changes %>%
-  filter(scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over", "picontrol"),
+# Plot 1: TCB % Change (existing plot)
+plot_tcb_change <- fishmip_changes %>%
+  filter(scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over"),
          Date >= 1970) %>%
   mutate(model_label = model_labels[model]) %>%
   ggplot(aes(x = Date, y = tcb_change, color = scenario)) +
@@ -147,10 +148,9 @@ plot_tcb <- fishmip_changes %>%
                      labels = c("historical" = "Historical", 
                                 "ssp126" = "SSP1-2.6", 
                                 "ssp585" = "SSP5-8.5", 
-                                "ssp534-over" = "SSP5-3.4-OS",
-                                "picontrol" = "Pre-industrial Control")) +
+                                "ssp534-over" = "SSP5-3.4-OS")) +
   labs(
-    title = "Total Consumer Biomass (TCB) - FishMIP Protocol",
+    title = "Total Consumer Biomass (TCB) - % Change from Baseline",
     subtitle = "Percentage change from 1990s baseline",
     x = "Year",
     y = "Change from 1990s baseline (%)",
@@ -163,17 +163,49 @@ plot_tcb <- fishmip_changes %>%
     strip.text = element_text(face = "bold")
   )
 
-ggsave(file.path(figure_dir, "FishMIP_TCB_timeseries.png"),
-       plot_tcb, width = 10, height = 12, dpi = 300)
+ggsave(file.path(figure_dir, "FishMIP_TCB_timeseries_pct_change.png"),
+       plot_tcb_change, width = 10, height = 12, dpi = 300)
 
-cat("  Saved: FishMIP_TCB_timeseries.png\n\n")
+cat("  Saved: FishMIP_TCB_timeseries_pct_change.png\n")
 
-#### PART 5: Log10 Size Bins Timeseries (Faceted) ####
-cat("=== Creating log10 size bins timeseries plot ===\n")
+# Plot 2: TCB Absolute Values (NEW)
+plot_tcb_absolute <- fishmip_changes %>%
+  filter(scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over"),
+         Date >= 1970) %>%
+  mutate(model_label = model_labels[model]) %>%
+  ggplot(aes(x = Date, y = tcb, color = scenario)) +
+  geom_line(linewidth = 0.8) +
+  facet_wrap(~model_label, ncol = 1) +
+  scale_color_manual(values = scenario_colors,
+                     labels = c("historical" = "Historical", 
+                                "ssp126" = "SSP1-2.6", 
+                                "ssp585" = "SSP5-8.5", 
+                                "ssp534-over" = "SSP5-3.4-OS")) +
+  labs(
+    title = "Total Consumer Biomass (TCB) - Absolute Values",
+    subtitle = "Mean TCB across all ocean grid cells",
+    x = "Year",
+    y = "TCB (g/m²)",
+    color = "Scenario"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position = "bottom",
+    strip.background = element_rect(fill = "gray90", color = NA),
+    strip.text = element_text(face = "bold")
+  )
 
-# Prepare data for size bin plots
-size_bins_data <- fishmip_changes %>%
-  filter(scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over", "picontrol"),
+ggsave(file.path(figure_dir, "FishMIP_TCB_timeseries_absolute.png"),
+       plot_tcb_absolute, width = 10, height = 12, dpi = 300)
+
+cat("  Saved: FishMIP_TCB_timeseries_absolute.png\n\n")
+
+#### PART 5: Log10 Size Bins Timeseries (% Change AND Absolute Values) ####
+cat("=== Creating log10 size bins timeseries plots ===\n")
+
+# Prepare data for size bin % change plots
+size_bins_data_change <- fishmip_changes %>%
+  filter(scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over"),
          Date >= 1970) %>%
   select(Date, model, scenario, contains("tcblog10")) %>%
   select(Date, model, scenario, ends_with("_change")) %>%
@@ -196,7 +228,8 @@ size_bins_data <- fishmip_changes %>%
                                       "100g-1kg", "1-10 kg", "10-100 kg"))
   )
 
-plot_size_bins <- ggplot(size_bins_data, aes(x = Date, y = change, color = scenario)) +
+# Plot 1: % Change
+plot_size_bins_change <- ggplot(size_bins_data_change, aes(x = Date, y = change, color = scenario)) +
   geom_line(linewidth = 0.6) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
   facet_grid(size_bin_label ~ model_label) +
@@ -204,10 +237,9 @@ plot_size_bins <- ggplot(size_bins_data, aes(x = Date, y = change, color = scena
                      labels = c("historical" = "Historical", 
                                 "ssp126" = "SSP1-2.6", 
                                 "ssp585" = "SSP5-8.5", 
-                                "ssp534-over" = "SSP5-3.4-OS",
-                                "picontrol" = "Pre-industrial Control")) +
+                                "ssp534-over" = "SSP5-3.4-OS")) +
   labs(
-    title = "Biomass by Log10 Size Bins - FishMIP Protocol",
+    title = "Biomass by Log10 Size Bins - % Change from Baseline",
     subtitle = "Percentage change from 1990s baseline by weight class",
     x = "Year",
     y = "Change from 1990s baseline (%)",
@@ -221,17 +253,71 @@ plot_size_bins <- ggplot(size_bins_data, aes(x = Date, y = change, color = scena
     panel.spacing = unit(0.5, "lines")
   )
 
-ggsave(file.path(figure_dir, "FishMIP_SizeBins_timeseries.png"),
-       plot_size_bins, width = 14, height = 18, dpi = 300)
+ggsave(file.path(figure_dir, "FishMIP_SizeBins_timeseries_pct_change.png"),
+       plot_size_bins_change, width = 14, height = 18, dpi = 300)
 
-cat("  Saved: FishMIP_SizeBins_timeseries.png\n\n")
+cat("  Saved: FishMIP_SizeBins_timeseries_pct_change.png\n")
 
-#### PART 6: Length-Based Size Classes Timeseries ####
-cat("=== Creating length-based size classes plot ===\n")
+# Prepare data for size bin absolute values
+size_bins_data_absolute <- fishmip_changes %>%
+  filter(scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over"),
+         Date >= 1970) %>%
+  select(Date, model, scenario, tcblog10_0, tcblog10_1, tcblog10_2, 
+         tcblog10_3, tcblog10_4, tcblog10_5) %>%
+  pivot_longer(cols = starts_with("tcblog10"), 
+               names_to = "size_bin", 
+               values_to = "biomass") %>%
+  mutate(
+    model_label = model_labels[model],
+    size_bin_label = case_when(
+      size_bin == "tcblog10_0" ~ "0.1-1 g",
+      size_bin == "tcblog10_1" ~ "1-10 g",
+      size_bin == "tcblog10_2" ~ "10-100 g",
+      size_bin == "tcblog10_3" ~ "100g-1kg",
+      size_bin == "tcblog10_4" ~ "1-10 kg",
+      size_bin == "tcblog10_5" ~ "10-100 kg",
+      TRUE ~ size_bin
+    ),
+    size_bin_label = factor(size_bin_label, 
+                            levels = c("0.1-1 g", "1-10 g", "10-100 g", 
+                                      "100g-1kg", "1-10 kg", "10-100 kg"))
+  )
 
-# Prepare data for length-based bins
-length_bins_data <- fishmip_changes %>%
-  filter(scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over", "picontrol"),
+# Plot 2: Absolute Values
+plot_size_bins_absolute <- ggplot(size_bins_data_absolute, aes(x = Date, y = biomass, color = scenario)) +
+  geom_line(linewidth = 0.6) +
+  facet_grid(size_bin_label ~ model_label, scales = "free_y") +
+  scale_color_manual(values = scenario_colors,
+                     labels = c("historical" = "Historical", 
+                                "ssp126" = "SSP1-2.6", 
+                                "ssp585" = "SSP5-8.5", 
+                                "ssp534-over" = "SSP5-3.4-OS")) +
+  labs(
+    title = "Biomass by Log10 Size Bins - Absolute Values",
+    subtitle = "Mean biomass across all ocean grid cells by weight class",
+    x = "Year",
+    y = "Biomass (g/m²)",
+    color = "Scenario"
+  ) +
+  theme_minimal(base_size = 10) +
+  theme(
+    legend.position = "bottom",
+    strip.background = element_rect(fill = "gray90", color = NA),
+    strip.text = element_text(face = "bold", size = 8),
+    panel.spacing = unit(0.5, "lines")
+  )
+
+ggsave(file.path(figure_dir, "FishMIP_SizeBins_timeseries_absolute.png"),
+       plot_size_bins_absolute, width = 14, height = 18, dpi = 300)
+
+cat("  Saved: FishMIP_SizeBins_timeseries_absolute.png\n\n")
+
+#### PART 6: Length-Based Size Classes Timeseries (% Change AND Absolute Values) ####
+cat("=== Creating length-based size classes plots ===\n")
+
+# Prepare data for length-based bins % change
+length_bins_data_change <- fishmip_changes %>%
+  filter(scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over"),
          Date >= 1970) %>%
   select(Date, model, scenario, contains("bp")) %>%
   select(Date, model, scenario, ends_with("_change")) %>%
@@ -250,7 +336,8 @@ length_bins_data <- fishmip_changes %>%
                               levels = c("< 30 cm", "30-90 cm", "> 90 cm"))
   )
 
-plot_length_bins <- ggplot(length_bins_data, aes(x = Date, y = change, color = scenario)) +
+# Plot 1: % Change
+plot_length_bins_change <- ggplot(length_bins_data_change, aes(x = Date, y = change, color = scenario)) +
   geom_line(linewidth = 0.8) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
   facet_grid(length_bin_label ~ model_label) +
@@ -258,10 +345,9 @@ plot_length_bins <- ggplot(length_bins_data, aes(x = Date, y = change, color = s
                      labels = c("historical" = "Historical", 
                                 "ssp126" = "SSP1-2.6", 
                                 "ssp585" = "SSP5-8.5", 
-                                "ssp534-over" = "SSP5-3.4-OS",
-                                "picontrol" = "Pre-industrial Control")) +
+                                "ssp534-over" = "SSP5-3.4-OS")) +
   labs(
-    title = "Biomass by Length-Based Size Classes - FishMIP Protocol",
+    title = "Biomass by Length-Based Size Classes - % Change from Baseline",
     subtitle = "Percentage change from 1990s baseline by body length",
     x = "Year",
     y = "Change from 1990s baseline (%)",
@@ -275,10 +361,59 @@ plot_length_bins <- ggplot(length_bins_data, aes(x = Date, y = change, color = s
     panel.spacing = unit(0.8, "lines")
   )
 
-ggsave(file.path(figure_dir, "FishMIP_LengthBins_timeseries.png"),
-       plot_length_bins, width = 14, height = 10, dpi = 300)
+ggsave(file.path(figure_dir, "FishMIP_LengthBins_timeseries_pct_change.png"),
+       plot_length_bins_change, width = 14, height = 10, dpi = 300)
 
-cat("  Saved: FishMIP_LengthBins_timeseries.png\n\n")
+cat("  Saved: FishMIP_LengthBins_timeseries_pct_change.png\n")
+
+# Prepare data for length-based bins absolute values
+length_bins_data_absolute <- fishmip_changes %>%
+  filter(scenario %in% c("historical", "ssp126", "ssp585", "ssp534-over"),
+         Date >= 1970) %>%
+  select(Date, model, scenario, bp30cm, bp30to90cm, bp90cm) %>%
+  pivot_longer(cols = starts_with("bp"), 
+               names_to = "length_bin", 
+               values_to = "biomass") %>%
+  mutate(
+    model_label = model_labels[model],
+    length_bin_label = case_when(
+      length_bin == "bp30cm" ~ "< 30 cm",
+      length_bin == "bp30to90cm" ~ "30-90 cm",
+      length_bin == "bp90cm" ~ "> 90 cm",
+      TRUE ~ length_bin
+    ),
+    length_bin_label = factor(length_bin_label, 
+                              levels = c("< 30 cm", "30-90 cm", "> 90 cm"))
+  )
+
+# Plot 2: Absolute Values
+plot_length_bins_absolute <- ggplot(length_bins_data_absolute, aes(x = Date, y = biomass, color = scenario)) +
+  geom_line(linewidth = 0.8) +
+  facet_grid(length_bin_label ~ model_label, scales = "free_y") +
+  scale_color_manual(values = scenario_colors,
+                     labels = c("historical" = "Historical", 
+                                "ssp126" = "SSP1-2.6", 
+                                "ssp585" = "SSP5-8.5", 
+                                "ssp534-over" = "SSP5-3.4-OS")) +
+  labs(
+    title = "Biomass by Length-Based Size Classes - Absolute Values",
+    subtitle = "Mean biomass across all ocean grid cells by body length",
+    x = "Year",
+    y = "Biomass (g/m²)",
+    color = "Scenario"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position = "bottom",
+    strip.background = element_rect(fill = "gray90", color = NA),
+    strip.text = element_text(face = "bold"),
+    panel.spacing = unit(0.8, "lines")
+  )
+
+ggsave(file.path(figure_dir, "FishMIP_LengthBins_timeseries_absolute.png"),
+       plot_length_bins_absolute, width = 14, height = 10, dpi = 300)
+
+cat("  Saved: FishMIP_LengthBins_timeseries_absolute.png\n\n")
 
 #### PART 7: Summary Statistics ####
 cat("=== Calculating summary statistics ===\n")
@@ -310,9 +445,15 @@ cat("FishMIP plotting complete!\n")
 cat("==============================================================================\n")
 cat("Outputs saved to:", figure_dir, "\n")
 cat("\nFiles created:\n")
-cat("  - FishMIP_TCB_timeseries.png\n")
-cat("  - FishMIP_SizeBins_timeseries.png (6 size bins × 3 models)\n")
-cat("  - FishMIP_LengthBins_timeseries.png (3 length bins × 3 models)\n")
-cat("  - FishMIP_TCB_spatial_*.png (4 time periods)\n")
-cat("  - FishMIP_summary_statistics_2270-2299.csv\n")
+cat("  TCB Timeseries:\n")
+cat("    - FishMIP_TCB_timeseries_pct_change.png (% change from baseline)\n")
+cat("    - FishMIP_TCB_timeseries_absolute.png (absolute values in g/m²)\n")
+cat("  Size Bins Timeseries:\n")
+cat("    - FishMIP_SizeBins_timeseries_pct_change.png (% change from baseline)\n")
+cat("    - FishMIP_SizeBins_timeseries_absolute.png (absolute values in g/m²)\n")
+cat("  Length Bins Timeseries:\n")
+cat("    - FishMIP_LengthBins_timeseries_pct_change.png (% change from baseline)\n")
+cat("    - FishMIP_LengthBins_timeseries_absolute.png (absolute values in g/m²)\n")
+cat("  Summary Statistics:\n")
+cat("    - FishMIP_summary_statistics_2270-2299.csv\n")
 cat("==============================================================================\n")

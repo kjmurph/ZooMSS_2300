@@ -9,8 +9,8 @@ library(ncdf4)
 
 # Setup paths
 base_dir <- getwd()
-input_dir <- file.path(base_dir, "Output", "Step3d_FishMIP_Format")
-output_dir <- file.path(base_dir, "Output", "FishMIP_NetCDF")
+input_dir <- file.path(base_dir, "Output", "Step3d_FishMIP_Format_submission_version")
+output_dir <- file.path(base_dir, "Output", "FishMIP_NetCDF_submission_version")
 
 # Create output directory
 if (!dir.exists(output_dir)) {

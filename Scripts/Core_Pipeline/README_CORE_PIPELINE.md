@@ -9,7 +9,7 @@ This directory contains the core processing pipeline for generating ZooMSS bioma
 **Purpose**: Convert and prepare raw climate data files
 
 - **`ZooMSS_2300_0_PreprocessUKESM_monthly.R`**: Converts UKESM monthly data to annual means
-- **`ZooMSS_2300_0a_ConvertPhycToChl_clean.R`**: Converts phytoplankton carbon (phyc) to chlorophyll concentration using C:Chl ratio of 50
+- **`ZooMSS_2300_0a_ConvertPhycToChl_clean.R`**: Converts phytoplankton carbon (phyc) to chlorophyll concentration 
   - Input: `Input/raw/phyc/` NetCDF files
   - Output: `Input/converted/chl/` NetCDF files
   - Note: Required because some models provide phyc instead of chl

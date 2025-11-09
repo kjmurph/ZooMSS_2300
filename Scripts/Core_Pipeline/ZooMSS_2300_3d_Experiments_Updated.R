@@ -134,18 +134,15 @@ w <- mdl$param$w[minb:maxb]
 cat("Weight classes: from", min(w), "to", max(w), "g\n")
 cat("Number of weight classes:", length(w), "\n\n")
 
-# Calculate species biomass using size-specific extraction
-cat("Calculating size-specific biomass...\n")
+# CORRECT WORKFLOW (matches original FishMIP Phase 1 code):
+# 1. Extract size range from abundance data
+cat("Extracting size range from abundance data...\n")
 Bio_size <- fZooMSS_ExtractSizeRange(zoo_combined, minb, maxb)
 
-# Sum across species to get total biomass per size class per cell
-cat("Summing biomass across species...\n")
-BioSum <- fZooMSS_SumSpecies(Bio_size)
+# 2. Convert abundance to biomass AND sum across species
+cat("Converting abundance to biomass (multiply by weight) and summing across species...\n")
+BioSum <- fZooMSS_SizeBiomass(Bio_size, mdl2)
 
-cat("Summed biomass calculated for", length(BioSum), "cells\n")
-cat("Each cell has biomass across", ncol(BioSum[[1]]), "weight classes\n\n")
-
-# Calculate FishMIP variables more efficiently
 cat("Calculating FishMIP variables for all cells...\n")
 
 # Create logical vectors for weight bins (outside the loop)
@@ -160,9 +157,9 @@ bp30to90_bin <- w >= weight30 & w < weight90
 bp90_bin <- w >= weight90
 
 # Function to calculate FishMIP variables for a single cell
+# Input: bio_vector is biomass per weight class (already summed across species, in g/m³)
 calculate_fishmip_cell <- function(bio_vector) {
-  # bio_vector is biomass across weight classes (1D vector)
-  # Multiply by MLD to convert to m-2
+  # Multiply by MLD to convert from g/m³ to g/m²
   bio_m2 <- bio_vector * MLD
   
   list(
@@ -196,6 +193,7 @@ cat("FishMIP variables:", paste(names(FishMIP_summary)[1:11], collapse = ", "), 
 
 # Also prepare species-level biomass for standard output
 cat("Preparing standard species biomass output...\n")
+# Use Bio_size (abundance × size range) and convert to species biomass
 Bio <- fZooMSS_SpeciesBiomass(Bio_size, mdl2)
 
 Bio_standard <- as_tibble(matrix(unlist(Bio), nrow=length(Bio), byrow=T), .name_repair = "unique") %>%
@@ -211,8 +209,8 @@ cat("Standard biomass data prepared with", nrow(Bio_standard), "cells and", ncol
 cat("=== Processing ESM files (overshoot scenarios use 2040-2300 only) ===\n\n")
 
 # Create output directories
-output_dir_standard <- file.path(base_dir, "Output", "Step3d_ZooMSS_Biomass_Projections_2300")
-output_dir_fishmip <- file.path(base_dir, "Output", "Step3d_FishMIP_Format")
+output_dir_standard <- file.path(base_dir, "Output", "Step3d_ZooMSS_Biomass_Projections_2300_submission_version")
+output_dir_fishmip <- file.path(base_dir, "Output", "Step3d_FishMIP_Format_submission_version")
 
 if (!dir.exists(output_dir_standard)) {
   dir.create(output_dir_standard, recursive = TRUE)
