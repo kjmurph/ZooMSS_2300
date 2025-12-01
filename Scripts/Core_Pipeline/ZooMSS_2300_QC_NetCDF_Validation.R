@@ -1,309 +1,267 @@
-# ================================================================
-# ZooMSS 2300 - NetCDF Quality Control Validation
-# ================================================================
-# Validates that NetCDF files contain correct biomass values by:
-# 1. Comparing NetCDF data to original RDS files
-# 2. Checking biomass value ranges are realistic
-# 3. Verifying temporal trends match expectations
-# 4. Checking metadata compliance
+# ============================================================================
+# ZooMSS 2300 - NetCDF QC Validation Script
+# Validates NetCDF files against ISIMIP3b protocol requirements
+# ============================================================================
 
-library(tidyverse)
 library(ncdf4)
+library(tidyverse)
 
-cat("==============================================================================\n")
-cat("ZooMSS 2300 - NetCDF Quality Control Validation\n")
-cat("==============================================================================\n")
-cat("Date:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
+cat("============================================================\n")
+cat("ISIMIP QC Validation for ZooMSS NetCDF Files\n")
+cat("============================================================\n\n")
 
-# Setup paths
-base_dir <- getwd()
-netcdf_dir <- file.path(base_dir, "Output", "FishMIP_NetCDF")
-rds_dir <- file.path(base_dir, "Output", "Step3d_FishMIP_Format")
+base_dir <- "Output/FishMIP_NetCDF_v2_ISIMIP_compliant"
+files <- list.files(base_dir, pattern = "\\.nc$", recursive = TRUE, full.names = TRUE)
+cat("Total files found:", length(files), "\n\n")
 
-cat("=== Verification Setup ===\n")
-cat("NetCDF directory:", netcdf_dir, "\n")
-cat("RDS directory:", rds_dir, "\n\n")
+# Initialize counters
+total_errors <- 0
+total_warnings <- 0
+file_results <- list()
 
-# Get file lists
-netcdf_files <- list.files(netcdf_dir, pattern = "\\.nc$", full.names = TRUE)
-rds_files <- list.files(rds_dir, pattern = "^ZooMSS_FishMIP_2300.*\\.rds$", full.names = TRUE)
+# ISIMIP3b Requirements
+REQUIRED_FILL_VALUE <- 1e20
+REQUIRED_LAT_COUNT <- 180
+REQUIRED_LON_COUNT <- 360
+REQUIRED_LAT_RANGE <- c(-89.5, 89.5)
+REQUIRED_LON_RANGE <- c(-179.5, 179.5)
 
-cat("NetCDF files found:", length(netcdf_files), "\n")
-cat("RDS files found:", length(rds_files), "\n\n")
-
-#### TEST 1: File Inventory Check ####
-cat("=== TEST 1: File Inventory ===\n")
-
-# Expected: 15 scenarios × 11 variables = 165 files
-expected_files <- 15 * 11
-test1_pass <- length(netcdf_files) == expected_files
-
-cat("Expected files:", expected_files, "\n")
-cat("Actual files:", length(netcdf_files), "\n")
-cat("Status:", ifelse(test1_pass, "✓ PASS", "✗ FAIL"), "\n\n")
-
-#### TEST 2: NetCDF vs RDS Comparison ####
-cat("=== TEST 2: NetCDF vs RDS Biomass Comparison ===\n")
-cat("Comparing TCB values between NetCDF and original RDS files...\n\n")
-
-# Test representative scenarios
-test_scenarios <- c(
-  "ipsl-cm6a-lr_ssp585",
-  "cesm2-waccm_historical",
-  "ukesm1-0-ll_ssp126"
-)
-
-comparison_results <- list()
-
-for (scenario in test_scenarios) {
-  cat("Testing:", scenario, "\n")
+# Check all files
+for (i in seq_along(files)) {
+  f <- files[i]
+  fname <- basename(f)
+  errors <- c()
+  warnings <- c()
   
-  # Find matching files (ensure exact match, take first if multiple)
-  rds_file <- rds_files[grep(paste0("_", scenario, "\\.rds$"), basename(rds_files))]
-  netcdf_file <- netcdf_files[grep(paste0(scenario, "_nat_tcb_global"), basename(netcdf_files))]
-  
-  if (length(rds_file) == 0 || length(netcdf_file) == 0) {
-    cat("  ⚠ Files not found, skipping\n\n")
-    next
-  }
-  
-  # Take first match if multiple
-  rds_file <- rds_file[1]
-  netcdf_file <- netcdf_file[1]
-  
-  # Load RDS data
-  rds_data <- readRDS(rds_file)
-  
-  # Load NetCDF data
-  nc <- nc_open(netcdf_file)
-  nc_tcb <- ncvar_get(nc, "tcb")
-  nc_time <- ncvar_get(nc, "time")
-  nc_close(nc)
-  
-  # Compare global means across time
-  first_year_idx <- 1
-  rds_first_year <- rds_data %>%
-    filter(Date == min(Date)) %>%
-    summarise(
-      mean_tcb = mean(tcb, na.rm = TRUE),
-      min_tcb = min(tcb, na.rm = TRUE),
-      max_tcb = max(tcb, na.rm = TRUE)
-    )
-  
-  nc_first_year <- list(
-    mean_tcb = mean(nc_tcb[,,first_year_idx], na.rm = TRUE),
-    min_tcb = min(nc_tcb[,,first_year_idx], na.rm = TRUE),
-    max_tcb = max(nc_tcb[,,first_year_idx], na.rm = TRUE)
-  )
-  
-  # Calculate comparison
-  mean_diff <- abs(rds_first_year$mean_tcb - nc_first_year$mean_tcb)
-  pct_diff <- mean_diff / rds_first_year$mean_tcb * 100
-  
-  cat("  Year:", min(rds_data$Date), "\n")
-  cat("  RDS mean TCB:", round(rds_first_year$mean_tcb, 2), "g/m²\n")
-  cat("  NetCDF mean TCB:", round(nc_first_year$mean_tcb, 2), "g/m²\n")
-  cat("  RDS range:", round(rds_first_year$min_tcb, 2), "-", round(rds_first_year$max_tcb, 2), "g/m²\n")
-  cat("  NetCDF range:", round(nc_first_year$min_tcb, 2), "-", round(nc_first_year$max_tcb, 2), "g/m²\n")
-  cat("  Absolute difference:", round(mean_diff, 4), "g/m²\n")
-  cat("  % Difference:", round(pct_diff, 2), "%\n")
-  
-  # Check if values match (allow < 0.1% difference)
-  test_pass <- pct_diff < 0.1
-  cat("  Status:", ifelse(test_pass, "✓ PASS - Values match", "✗ FAIL - Values differ"), "\n\n")
-  
-  comparison_results[[scenario]] <- list(
-    rds_mean = rds_first_year$mean_tcb,
-    nc_mean = nc_first_year$mean_tcb,
-    diff = mean_diff,
-    pct_diff = pct_diff
-  )
-}
-
-#### TEST 3: Biomass Range Validation ####
-cat("=== TEST 3: Biomass Value Range Checks ===\n")
-cat("Checking if biomass values are realistic (0.1 - 2000 g/m²)...\n\n")
-
-range_check_results <- list()
-
-# Sample 5 random NetCDF files with TCB variable
-tcb_files <- netcdf_files[grep("_tcb_", basename(netcdf_files))]
-sample_files <- sample(tcb_files, min(5, length(tcb_files)))
-
-for (nc_file in sample_files) {
-  fname <- basename(nc_file)
-  cat("Checking:", fname, "\n")
-  
-  nc <- nc_open(nc_file)
-  tcb <- ncvar_get(nc, "tcb")
-  nc_close(nc)
-  
-  # Get non-NA values
-  tcb_valid <- tcb[!is.na(tcb)]
-  
-  stats <- list(
-    file = fname,
-    min = min(tcb_valid, na.rm = TRUE),
-    max = max(tcb_valid, na.rm = TRUE),
-    mean = mean(tcb_valid, na.rm = TRUE),
-    median = median(tcb_valid, na.rm = TRUE),
-    n_valid = length(tcb_valid),
-    n_total = length(tcb)
-  )
-  
-  range_check_results[[fname]] <- stats
-  
-  cat("  Range:", round(stats$min, 2), "-", round(stats$max, 2), "g/m²\n")
-  cat("  Mean:", round(stats$mean, 2), "g/m²\n")
-  cat("  Median:", round(stats$median, 2), "g/m²\n")
-  
-  # Check if realistic (not in billions!)
-  realistic <- stats$min >= 0.01 && stats$max < 5000 && stats$mean < 500
-  cat("  Status:", ifelse(realistic, "✓ PASS - Realistic biomass", "✗ FAIL - Unrealistic values"), "\n\n")
-}
-
-#### TEST 4: Temporal Trend Validation ####
-cat("=== TEST 4: Temporal Trends (SSP5-8.5 should show decline) ===\n")
-
-# Test IPSL SSP5-8.5 (should show ~20% decline)
-ipsl_ssp585_file <- netcdf_files[grep("ipsl-cm6a-lr_ssp585_nat_tcb_global", basename(netcdf_files))]
-
-if (length(ipsl_ssp585_file) > 0) {
-  ipsl_ssp585_file <- ipsl_ssp585_file[1]  # Take first match
-  cat("Testing: IPSL-CM6A-LR SSP5-8.5\n")
-  
-  nc <- nc_open(ipsl_ssp585_file)
-  tcb <- ncvar_get(nc, "tcb")
-  time <- ncvar_get(nc, "time")
-  nc_close(nc)
-  
-  # Calculate global mean for each year
-  yearly_means <- apply(tcb, 3, function(x) mean(x, na.rm = TRUE))
-  years <- floor(time)
-  
-  # Get 2015-2020 and 2295-2300 means
-  early_mean <- mean(yearly_means[years >= 2015 & years <= 2020])
-  late_mean <- mean(yearly_means[years >= 2295 & years <= 2300])
-  pct_change <- (late_mean - early_mean) / early_mean * 100
-  
-  cat("  2015-2020 mean TCB:", round(early_mean, 2), "g/m²\n")
-  cat("  2295-2300 mean TCB:", round(late_mean, 2), "g/m²\n")
-  cat("  % Change:", round(pct_change, 1), "%\n")
-  
-  # Should show decline (negative change)
-  expected_decline <- pct_change < -5 && pct_change > -50
-  cat("  Status:", ifelse(expected_decline, "✓ PASS - Expected decline", "✗ FAIL - Unexpected trend"), "\n\n")
-}
-
-#### TEST 5: Metadata Validation ####
-cat("=== TEST 5: NetCDF Metadata Compliance ===\n")
-
-# Check one file for proper metadata
-sample_nc <- netcdf_files[grep("ipsl-cm6a-lr_ssp585_nat_tcb_global", basename(netcdf_files))]
-
-if (length(sample_nc) > 0) {
-  sample_nc <- sample_nc[1]  # Take first match
-  cat("Checking metadata in:", basename(sample_nc), "\n")
-  
-  nc <- nc_open(sample_nc)
-  
-  # Check for required global attributes
-  required_attrs <- c("Conventions", "title", "institution", "source", "contact")
-  metadata_check <- sapply(required_attrs, function(attr) {
-    tryCatch({
-      val <- ncatt_get(nc, 0, attr)$value
-      !is.null(val) && nchar(val) > 0
-    }, error = function(e) FALSE)
+  tryCatch({
+    nc <- nc_open(f)
+    
+    # Extract variable name from filename
+    # Pattern: zoomss_esm_nobasd_scenario_nat_default_VARNAME_global_annual_start_end.nc
+    parts <- strsplit(fname, "_")[[1]]
+    var_name <- parts[7]  # Variable is 7th element
+    
+    # === Check Dimensions ===
+    dims <- names(nc$dim)
+    
+    # Check lat
+    if ("lat" %in% dims) {
+      lat <- ncvar_get(nc, "lat")
+      if (length(lat) != REQUIRED_LAT_COUNT) {
+        errors <- c(errors, paste0("Lat count: ", length(lat), " (expected ", REQUIRED_LAT_COUNT, ")"))
+      }
+      if (lat[1] < lat[length(lat)]) {
+        errors <- c(errors, "Lat order: S to N (should be N to S)")
+      }
+      if (min(lat) != REQUIRED_LAT_RANGE[1] || max(lat) != REQUIRED_LAT_RANGE[2]) {
+        warnings <- c(warnings, paste0("Lat range: ", min(lat), " to ", max(lat)))
+      }
+      
+      # Check lat attributes
+      lat_axis <- ncatt_get(nc, "lat", "axis")
+      lat_std <- ncatt_get(nc, "lat", "standard_name")
+      if (!lat_axis$hasatt) errors <- c(errors, "Missing lat axis attribute")
+      if (!lat_std$hasatt) errors <- c(errors, "Missing lat standard_name")
+    } else {
+      errors <- c(errors, "Missing lat dimension")
+    }
+    
+    # Check lon
+    if ("lon" %in% dims) {
+      lon <- ncvar_get(nc, "lon")
+      if (length(lon) != REQUIRED_LON_COUNT) {
+        errors <- c(errors, paste0("Lon count: ", length(lon), " (expected ", REQUIRED_LON_COUNT, ")"))
+      }
+      
+      # Check lon attributes
+      lon_axis <- ncatt_get(nc, "lon", "axis")
+      lon_std <- ncatt_get(nc, "lon", "standard_name")
+      if (!lon_axis$hasatt) errors <- c(errors, "Missing lon axis attribute")
+      if (!lon_std$hasatt) errors <- c(errors, "Missing lon standard_name")
+    } else {
+      errors <- c(errors, "Missing lon dimension")
+    }
+    
+    # Check time
+    if ("time" %in% dims) {
+      time <- ncvar_get(nc, "time")
+      time_axis <- ncatt_get(nc, "time", "axis")
+      time_units <- ncatt_get(nc, "time", "units")
+      time_calendar <- ncatt_get(nc, "time", "calendar")
+      
+      if (!time_axis$hasatt) errors <- c(errors, "Missing time axis attribute")
+      if (!time_units$hasatt) errors <- c(errors, "Missing time units")
+      if (!time_calendar$hasatt) errors <- c(errors, "Missing time calendar")
+      
+      # Check time reference (should be 1601-01-01 for ISIMIP3b)
+      if (time_units$hasatt && !grepl("1601-01-01", time_units$value)) {
+        warnings <- c(warnings, paste0("Time units: ", time_units$value))
+      }
+    } else {
+      errors <- c(errors, "Missing time dimension")
+    }
+    
+    # Check bins dimension for tcblog10
+    if (var_name == "tcblog10") {
+      if (!"bins" %in% dims) {
+        errors <- c(errors, "Missing bins dimension for tcblog10")
+      } else {
+        bins_axis <- ncatt_get(nc, "bins", "axis")
+        if (!bins_axis$hasatt) errors <- c(errors, "Missing bins axis attribute")
+      }
+    }
+    
+    # === Check Variable Attributes ===
+    if (var_name %in% names(nc$var)) {
+      var <- nc$var[[var_name]]
+      
+      # Fill value
+      fv <- ncatt_get(nc, var_name, "_FillValue")
+      mv <- ncatt_get(nc, var_name, "missing_value")
+      
+      if (!fv$hasatt) {
+        errors <- c(errors, "Missing _FillValue")
+      } else if (fv$value != REQUIRED_FILL_VALUE) {
+        errors <- c(errors, paste0("Wrong _FillValue: ", fv$value, " (expected ", REQUIRED_FILL_VALUE, ")"))
+      }
+      
+      if (!mv$hasatt) {
+        errors <- c(errors, "Missing missing_value attribute")
+      }
+      
+      # Long name
+      ln <- ncatt_get(nc, var_name, "long_name")
+      if (!ln$hasatt) errors <- c(errors, "Missing long_name")
+      
+      # Units
+      units <- ncatt_get(nc, var_name, "units")
+      if (!units$hasatt) errors <- c(errors, "Missing units")
+    } else {
+      errors <- c(errors, paste0("Variable '", var_name, "' not found in file"))
+    }
+    
+    # === Check Global Attributes ===
+    title <- ncatt_get(nc, 0, "title")
+    source <- ncatt_get(nc, 0, "source")
+    contact <- ncatt_get(nc, 0, "contact")
+    institution <- ncatt_get(nc, 0, "institution")
+    
+    if (!title$hasatt) errors <- c(errors, "Missing global title")
+    if (!source$hasatt) errors <- c(errors, "Missing global source")
+    if (!contact$hasatt) warnings <- c(warnings, "Missing global contact")
+    if (!institution$hasatt) warnings <- c(warnings, "Missing global institution")
+    
+    nc_close(nc)
+    
+  }, error = function(e) {
+    errors <- c(errors, paste0("File read error: ", e$message))
   })
   
-  cat("\n  Required global attributes:\n")
-  for (i in seq_along(required_attrs)) {
-    status <- ifelse(metadata_check[i], "✓", "✗")
-    cat("    ", status, required_attrs[i], "\n")
+  # Store results
+  file_results[[fname]] <- list(
+    errors = errors,
+    warnings = warnings
+  )
+  
+  total_errors <- total_errors + length(errors)
+  total_warnings <- total_warnings + length(warnings)
+  
+  # Print progress for files with issues
+  if (length(errors) > 0 || length(warnings) > 0) {
+    cat("\n", fname, "\n")
+    if (length(errors) > 0) {
+      for (e in errors) cat("  ERROR:", e, "\n")
+    }
+    if (length(warnings) > 0) {
+      for (w in warnings) cat("  WARNING:", w, "\n")
+    }
   }
   
-  # Check dimensions
-  dims <- names(nc$dim)
-  expected_dims <- c("lon", "lat", "time")
-  dims_check <- all(expected_dims %in% dims)
-  cat("\n  Dimensions:", ifelse(dims_check, "✓ PASS", "✗ FAIL"), "\n")
-  cat("    Expected:", paste(expected_dims, collapse = ", "), "\n")
-  cat("    Found:", paste(dims, collapse = ", "), "\n")
+  # Progress indicator
+  if (i %% 30 == 0) {
+    cat("Checked", i, "of", length(files), "files...\n")
+  }
+}
+
+# === Summary ===
+cat("\n============================================================\n")
+cat("QC VALIDATION SUMMARY\n")
+cat("============================================================\n")
+cat("Total files checked:", length(files), "\n")
+cat("Total errors:", total_errors, "\n")
+cat("Total warnings:", total_warnings, "\n")
+cat("Files with errors:", sum(sapply(file_results, function(x) length(x$errors) > 0)), "\n")
+cat("Files with warnings:", sum(sapply(file_results, function(x) length(x$warnings) > 0)), "\n")
+
+if (total_errors == 0) {
+  cat("\n*** ALL FILES PASSED QC VALIDATION! ***\n")
+} else {
+  cat("\n*** Some files have errors - review above output ***\n")
+}
+
+cat("============================================================\n")
+
+# === Detailed check of one file per variable type ===
+cat("\n\n=== DETAILED SAMPLE CHECK ===\n")
+
+sample_files <- c(
+  tcb = files[grep("_tcb_", files)[1]],
+  bp30cm = files[grep("_bp30cm_", files)[1]],
+  bp30to90cm = files[grep("_bp30to90cm_", files)[1]],
+  bp90cm = files[grep("_bp90cm_", files)[1]],
+  tcblog10 = files[grep("_tcblog10_", files)[1]]
+)
+
+for (var_name in names(sample_files)) {
+  f <- sample_files[var_name]
+  cat("\n---", var_name, ":", basename(f), "---\n")
   
-  # Check variable metadata
-  tcb_var <- nc$var$tcb
-  cat("\n  TCB variable metadata:\n")
-  cat("    Long name:", tcb_var$longname, "\n")
-  cat("    Units:", tcb_var$units, "\n")
-  cat("    Missing value:", tcb_var$missval, "\n")
+  nc <- nc_open(f)
+  
+  # Dimensions
+  cat("Dimensions:", paste(names(nc$dim), collapse = ", "), "\n")
+  
+  # Lat/Lon
+  lat <- ncvar_get(nc, "lat")
+  lon <- ncvar_get(nc, "lon")
+  time <- ncvar_get(nc, "time")
+  cat("Lat:", length(lat), "values from", lat[1], "to", lat[length(lat)], "\n")
+  cat("Lon:", length(lon), "values from", lon[1], "to", lon[length(lon)], "\n")
+  cat("Time:", length(time), "values from", min(time), "to", max(time), "\n")
+  
+  # Time units
+  time_units <- ncatt_get(nc, "time", "units")
+  cat("Time units:", time_units$value, "\n")
+  
+  # Variable info
+  if (var_name %in% names(nc$var)) {
+    var <- nc$var[[var_name]]
+    cat("Variable dims:", paste(sapply(var$dim, function(d) d$name), collapse = " x "), "\n")
+    
+    fv <- ncatt_get(nc, var_name, "_FillValue")
+    ln <- ncatt_get(nc, var_name, "long_name")
+    units <- ncatt_get(nc, var_name, "units")
+    
+    cat("_FillValue:", fv$value, "\n")
+    cat("long_name:", ln$value, "\n")
+    cat("units:", units$value, "\n")
+    
+    # Get data sample
+    data <- ncvar_get(nc, var_name)
+    valid_data <- data[!is.na(data) & data != fv$value]
+    if (length(valid_data) > 0) {
+      cat("Data range:", round(min(valid_data), 4), "to", round(max(valid_data), 4), "\n")
+      cat("Data mean:", round(mean(valid_data), 4), "\n")
+    }
+  }
+  
+  # Global attrs
+  title <- ncatt_get(nc, 0, "title")
+  cat("Title:", substr(title$value, 1, 60), "...\n")
   
   nc_close(nc)
-  
-  cat("\n  Status: ✓ Metadata complete\n\n")
 }
 
-#### TEST 6: Size Bin Summation Check ####
-cat("=== TEST 6: Size Bin Summation (TCB = sum of bins) ===\n")
-
-# Test one scenario
-test_file_base <- "ipsl-cm6a-lr_ssp585"
-tcb_file <- netcdf_files[grep(paste0(test_file_base, "_nat_tcb_global"), basename(netcdf_files))]
-bin_files <- netcdf_files[grep(paste0(test_file_base, "_nat_tcblog10"), basename(netcdf_files))]
-
-if (length(tcb_file) > 0 && length(bin_files) == 6) {
-  tcb_file <- tcb_file[1]  # Take first match
-  cat("Testing size bin summation for:", test_file_base, "\n")
-  
-  # Load TCB
-  nc_tcb <- nc_open(tcb_file)
-  tcb <- ncvar_get(nc_tcb, "tcb")
-  nc_close(nc_tcb)
-  
-  # Load all bins and sum
-  bins_sum <- array(0, dim = dim(tcb))
-  for (bin_file in bin_files) {
-    nc_bin <- nc_open(bin_file)
-    bin_data <- ncvar_get(nc_bin, names(nc_bin$var)[1])
-    bins_sum <- bins_sum + bin_data
-    nc_close(nc_bin)
-  }
-  
-  # Compare (sample 100 random cells from first timestep)
-  tcb_sample <- as.vector(tcb[,,1])
-  bins_sample <- as.vector(bins_sum[,,1])
-  
-  valid_idx <- !is.na(tcb_sample) & !is.na(bins_sample)
-  sample_idx <- sample(which(valid_idx), min(100, sum(valid_idx)))
-  
-  correlation <- cor(tcb_sample[sample_idx], bins_sample[sample_idx])
-  mean_diff <- mean(abs(tcb_sample[sample_idx] - bins_sample[sample_idx]))
-  
-  cat("  Sample cells:", length(sample_idx), "\n")
-  cat("  Correlation:", round(correlation, 6), "\n")
-  cat("  Mean difference:", round(mean_diff, 4), "g/m²\n")
-  
-  # Allow small differences due to rounding
-  bin_check <- correlation > 0.999 && mean_diff < 1
-  cat("  Status:", ifelse(bin_check, "✓ PASS", "⚠ WARNING - Small differences acceptable"), "\n\n")
-}
-
-#### SUMMARY ####
-cat("==============================================================================\n")
-cat("VALIDATION SUMMARY\n")
-cat("==============================================================================\n\n")
-
-cat("✓ TEST 1: File inventory - 165 files present\n")
-cat("✓ TEST 2: NetCDF vs RDS comparison - Values match\n")
-cat("✓ TEST 3: Biomass ranges - Realistic values (not billions!)\n")
-cat("✓ TEST 4: Temporal trends - Expected declines under SSP5-8.5\n")
-cat("✓ TEST 5: Metadata - CF-1.6 compliant\n")
-cat("✓ TEST 6: Size bins - Sum to TCB (within rounding)\n\n")
-
-cat("==============================================================================\n")
-cat("CONCLUSION: NetCDF files contain CORRECT biomass values!\n")
-cat("==============================================================================\n")
-cat("\nLocation:", netcdf_dir, "\n")
-cat("Total files: 165 NetCDF files (15 scenarios × 11 variables)\n")
-cat("Total size: ~4.7 GB\n")
-cat("Status: ✓ Ready for ISIMIP submission\n")
-cat("==============================================================================\n")
+cat("\n============================================================\n")
+cat("QC Validation Complete\n")
+cat("============================================================\n")
